@@ -66,6 +66,8 @@ architecture rtl of ANC_System is
     signal trainingNoise : std_logic_vector(23 downto 0) := X"123456";
 begin
     
+    antiNoise <= AntiNoiseAdapt;
+    
     adapt <= sw0;
     trainingMode <= sw1;
     reset <= btn0;
