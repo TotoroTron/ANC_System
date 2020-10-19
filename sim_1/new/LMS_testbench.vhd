@@ -32,14 +32,14 @@ USE work.top_level_pkg.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity fir_testbench is
+entity LMS_testbench is
 --  Port ( );
-end fir_testbench;
+end LMS_testbench;
 
-architecture Behavioral of fir_testbench is
-    signal clk, reset, enb, validIn, validOut : std_logic := '0';
-    signal dataIn, dataOut : std_logic_vector(23 downto 0);
-    signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => X"400000");
+architecture Behavioral of LMS_testbench is
+    signal clk, reset, clk_enable, ce_out : std_logic := '0';
+    signal input, desired: std_logic_vector(23 downto 0);
+    signal weights : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     constant clk_period : time := 10ns;
 
 begin
@@ -48,20 +48,25 @@ begin
     TEST: process
     begin
         wait until rising_edge(clk);
-        validIn <= '1'; enb <= '1';
-        dataIn <= std_logic_vector(to_signed(3,24));
+        clk_enable <= '1';
+        input <= std_logic_vector(to_signed(3,24));
+        desired <= std_logic_vector(to_signed(4,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(1,24));
+        input <= std_logic_vector(to_signed(1,24));
+        desired <= std_logic_vector(to_signed(2,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(4,24));
+        input <= std_logic_vector(to_signed(4,24));
+        desired <= std_logic_vector(to_signed(-1,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(2,24));
+        input <= std_logic_vector(to_signed(2,24));
+        desired <= std_logic_vector(to_signed(-2,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(1,24));
+        input <= std_logic_vector(to_signed(1,24));
+        desired <= std_logic_vector(to_signed(1,24));
     
     end process;
     
@@ -73,16 +78,15 @@ begin
         wait for clk_period/2;
     end process;
     
-    UUT: entity work.Discrete_FIR_Filter_HDL_Optimized
+    UUT: entity work.LMSFilter
     port map(
         clk => clk,
         reset => reset,
-        enb => enb,
-        dataIn => dataIn,
-        validIn => validIn,
-        Coeff => Coeff,
-        dataOut => dataOut,
-        validOut => validOut
+        clk_enable => clk_enable,
+        In1 => input,
+        In2 => desired,
+        ce_out => ce_out,
+        Out3 => weights
     );
 
 end Behavioral;

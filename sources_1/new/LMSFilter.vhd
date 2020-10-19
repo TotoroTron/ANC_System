@@ -45,12 +45,12 @@ ENTITY LMSFilter IS
   PORT( clk                               :   IN    std_logic;
         reset                             :   IN    std_logic;
         clk_enable                        :   IN    std_logic;
-        In1                               :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24
-        In2                               :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24
+        In1                               :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24 INPUT SIGNAL
+        In2                               :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24 DESIRED SIGNAL
         ce_out                            :   OUT   std_logic;
         --Out1                              :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24
         --Out2                              :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24
-        Out3                              :   OUT   vector_of_std_logic_vector24(0 TO 11)  -- sfix24_En23 [12]
+        Out3                              :   OUT   vector_of_std_logic_vector24(0 TO 11)  -- sfix24_En23 [12] WEIGHTS
         );
 END LMSFilter;
 
@@ -61,144 +61,144 @@ ARCHITECTURE rtl OF LMSFilter IS
   CONSTANT C_LMS_FILTER_LEAKAGE           : signed(15 DOWNTO 0) := 
     "0111111111111111";  -- sfix16_En15
   CONSTANT C_LMS_FILTER_STEP_SIZE         : signed(15 DOWNTO 0) := 
-    "0100000000000000";  -- sfix16_En15
-
+    "0000000001000000";  -- sfix16_En15
+  
   -- Signals
   SIGNAL enb                              : std_logic;
-  SIGNAL In1_signed                       : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL In2_signed                       : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL LMS_Filter_out1                  : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL LMS_Filter_out2                  : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL LMS_Filter_out3                  : vector_of_signed24(0 TO 11);  -- sfix24_En23 [12]
-  SIGNAL weight                           : vector_of_signed24(0 TO 11);  -- sfix24_En23 [12]
-  SIGNAL filter_sum                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL data_pipeline                    : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL data_pipeline_tmp                : vector_of_signed24(0 TO 10);  -- sfix24 [11]
-  SIGNAL filter_products                  : vector_of_signed32(0 TO 11);  -- sfix32_En20 [12]
-  SIGNAL mul_temp                         : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_1                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_2                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_3                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_4                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_5                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_6                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_7                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_8                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_9                       : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_10                      : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL mul_temp_11                      : signed(47 DOWNTO 0);  -- sfix48_En23
-  SIGNAL sum_1                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast                         : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_1                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp                         : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_2                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_2                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_3                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_1                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_3                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_4                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_5                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_2                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_4                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_6                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_7                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_3                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_5                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_8                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_9                       : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_4                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_6                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_10                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_11                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_5                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_7                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_12                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_13                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_6                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_8                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_14                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_15                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_7                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_9                            : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_16                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_17                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_8                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sum_10                           : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_18                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_19                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_9                       : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL add_cast_20                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_21                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_10                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL sub_cast                         : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL sub_cast_1                       : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL sub_temp                         : signed(24 DOWNTO 0);  -- sfix25
-  SIGNAL mu_err                           : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL mul_temp_12                      : signed(39 DOWNTO 0);  -- sfix40_En15
-  SIGNAL mu_err_data_prod                 : vector_of_signed32(0 TO 11);  -- sfix32_En20 [12]
-  SIGNAL mul_temp_13                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_14                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_15                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_16                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_17                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_18                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_19                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_20                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_21                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_22                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_23                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL mul_temp_24                      : signed(55 DOWNTO 0);  -- sfix56_En20
-  SIGNAL weight_scaled                    : vector_of_signed32(0 TO 11);  -- sfix32_En20 [12]
-  SIGNAL weight_adder_output              : vector_of_signed32(0 TO 11);  -- sfix32_En20 [12]
-  SIGNAL weight_adder_output_cast         : vector_of_signed24(0 TO 11);  -- sfix24_En23 [12]
-  SIGNAL add_cast_22                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_23                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_11                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_25                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_24                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_25                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_12                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_26                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_26                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_27                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_13                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_27                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_28                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_29                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_14                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_28                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_30                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_31                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_15                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_29                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_32                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_33                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_16                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_30                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_34                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_35                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_17                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_31                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_36                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_37                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_18                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_32                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_38                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_39                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_19                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_33                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_40                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_41                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_20                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_34                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_42                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_43                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_21                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_35                      : signed(39 DOWNTO 0);  -- sfix40_En38
-  SIGNAL add_cast_44                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_cast_45                      : signed(31 DOWNTO 0);  -- sfix32_En20
-  SIGNAL add_temp_22                      : signed(32 DOWNTO 0);  -- sfix33_En20
-  SIGNAL mul_temp_36                      : signed(39 DOWNTO 0);  -- sfix40_En38
+  SIGNAL In1_signed                       : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL In2_signed                       : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL LMS_Filter_out1                  : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL LMS_Filter_out2                  : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL LMS_Filter_out3                  : vector_of_signed24(0 TO 11):= (others => (others => '0'));  -- sfix24_En23 [12]
+  SIGNAL weight                           : vector_of_signed24(0 TO 11):= (others => (others => '0'));  -- sfix24_En23 [12]
+  SIGNAL filter_sum                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL data_pipeline                    : vector_of_signed24(0 TO 11):= (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL data_pipeline_tmp                : vector_of_signed24(0 TO 10):= (others => (others => '0'));  -- sfix24 [11]
+  SIGNAL filter_products                  : vector_of_signed32(0 TO 11):= (others => (others => '0'));  -- sfix32_En20 [12]
+  SIGNAL mul_temp                         : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_1                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_2                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_3                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_4                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_5                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_6                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_7                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_8                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_9                       : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_10                      : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL mul_temp_11                      : signed(47 DOWNTO 0):= (others => '0');  -- sfix48_En23
+  SIGNAL sum_1                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast                         : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_1                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp                         : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_2                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_2                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_3                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_1                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_3                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_4                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_5                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_2                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_4                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_6                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_7                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_3                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_5                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_8                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_9                       : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_4                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_6                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_10                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_11                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_5                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_7                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_12                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_13                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_6                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_8                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_14                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_15                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_7                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_9                            : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_16                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_17                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_8                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sum_10                           : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_18                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_19                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_9                       : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL add_cast_20                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_21                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_10                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL sub_cast                         : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL sub_cast_1                       : signed(23 DOWNTO 0):= (others => '0');  -- sfix24
+  SIGNAL sub_temp                         : signed(24 DOWNTO 0):= (others => '0');  -- sfix25
+  SIGNAL mu_err                           : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL mul_temp_12                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En15
+  SIGNAL mu_err_data_prod                 : vector_of_signed32(0 TO 11):= (others => (others => '0'));  -- sfix32_En20 [12]
+  SIGNAL mul_temp_13                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_14                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_15                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_16                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_17                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_18                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_19                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_20                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_21                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_22                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_23                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL mul_temp_24                      : signed(55 DOWNTO 0):= (others => '0');  -- sfix56_En20
+  SIGNAL weight_scaled                    : vector_of_signed32(0 TO 11):= (others => (others => '0'));  -- sfix32_En20 [12]
+  SIGNAL weight_adder_output              : vector_of_signed32(0 TO 11):= (others => (others => '0'));  -- sfix32_En20 [12]
+  SIGNAL weight_adder_output_cast         : vector_of_signed24(0 TO 11):= (others => (others => '0'));  -- sfix24_En23 [12]
+  SIGNAL add_cast_22                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_23                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_11                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_25                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_24                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_25                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_12                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_26                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_26                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_27                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_13                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_27                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_28                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_29                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_14                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_28                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_30                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_31                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_15                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_29                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_32                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_33                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_16                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_30                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_34                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_35                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_17                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_31                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_36                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_37                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_18                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_32                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_38                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_39                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_19                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_33                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_40                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_41                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_20                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_34                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_42                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_43                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_21                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_35                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
+  SIGNAL add_cast_44                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_cast_45                      : signed(31 DOWNTO 0):= (others => '0');  -- sfix32_En20
+  SIGNAL add_temp_22                      : signed(32 DOWNTO 0):= (others => '0');  -- sfix33_En20
+  SIGNAL mul_temp_36                      : signed(39 DOWNTO 0):= (others => '0');  -- sfix40_En38
 
 BEGIN
   In1_signed <= signed(In1);

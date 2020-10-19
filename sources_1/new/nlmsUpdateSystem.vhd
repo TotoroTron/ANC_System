@@ -71,7 +71,7 @@ ARCHITECTURE rtl OF nlmsUpdateSystem IS
     USE ENTITY work.nlmsUpdate(rtl);
 
   -- Signals
-  SIGNAL W                                : vector_of_std_logic_vector24(0 TO 11);  -- ufix24 [12]
+  SIGNAL W                                : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));  -- ufix24 [12]
 
 BEGIN
   u_nlmsUpdate : nlmsUpdate

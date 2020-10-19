@@ -41,13 +41,13 @@ ARCHITECTURE rtl OF nlmsUpdate IS
     signed'("1000000000000000000000000000000000000000000000000");  -- sfix49
 
   -- Signals
-  SIGNAL X_signed                         : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL E_signed                         : signed(23 DOWNTO 0);  -- sfix24
-  SIGNAL W_tmp                            : vector_of_signed24(0 TO 11);  -- sfix24_En23 [12]
-  SIGNAL xBuffer                          : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL wBuffer                          : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL xBuffer_next                     : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL wBuffer_next                     : vector_of_signed24(0 TO 11);  -- sfix24_En23 [12]
+  SIGNAL X_signed                         : signed(23 DOWNTO 0) := (others => '0');  -- sfix24
+  SIGNAL E_signed                         : signed(23 DOWNTO 0) := (others => '0');  -- sfix24
+  SIGNAL W_tmp                            : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24_En23 [12]
+  SIGNAL xBuffer                          : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL wBuffer                          : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL xBuffer_next                     : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL wBuffer_next                     : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24_En23 [12]
 
 BEGIN
   X_signed <= signed(X);
@@ -68,24 +68,24 @@ BEGIN
   END PROCESS nlmsUpdate_1_process;
 
   nlmsUpdate_1_output : PROCESS (Adapt, E_signed, X_signed, wBuffer, xBuffer)
-    VARIABLE xEnergy : signed(51 DOWNTO 0);
-    VARIABLE emu : signed(23 DOWNTO 0);
-    VARIABLE xbufdivengy : signed(51 DOWNTO 0);
-    VARIABLE w_adj : signed(75 DOWNTO 0);
-    VARIABLE hfi : signed(47 DOWNTO 0);
-    VARIABLE c : vector_of_signed48(0 TO 11);
-    VARIABLE xBuffer_temp : vector_of_signed24(0 TO 11);
-    VARIABLE wBuffer_temp : vector_of_signed24(0 TO 11);
-    VARIABLE div_temp : vector_of_signed46(0 TO 11);
-    VARIABLE div_temp_0 : vector_of_signed49(0 TO 11);
-    VARIABLE add_temp : vector_of_signed53(0 TO 10);
-    VARIABLE cast : vector_of_signed46(0 TO 11);
-    VARIABLE slice_cast : vector_of_signed49(0 TO 11);
-    VARIABLE slice_cast_0 : vector_of_signed49(0 TO 11);
-    VARIABLE cast_0 : vector_of_signed49(0 TO 11);
-    VARIABLE add_cast : vector_of_signed77(0 TO 11);
-    VARIABLE add_cast_0 : vector_of_signed77(0 TO 11);
-    VARIABLE add_temp_0 : vector_of_signed77(0 TO 11);
+    VARIABLE xEnergy        : signed(51 DOWNTO 0) := (others => '0');
+    VARIABLE emu            : signed(23 DOWNTO 0) := (others => '0');
+    VARIABLE xbufdivengy    : signed(51 DOWNTO 0) := (others => '0');
+    VARIABLE w_adj          : signed(75 DOWNTO 0) := (others => '0');
+    VARIABLE hfi            : signed(47 DOWNTO 0) := (others => '0');
+    VARIABLE c              : vector_of_signed48(0 TO 11) := (others => (others => '0'));
+    VARIABLE xBuffer_temp   : vector_of_signed24(0 TO 11) := (others => (others => '0'));
+    VARIABLE wBuffer_temp   : vector_of_signed24(0 TO 11) := (others => (others => '0'));
+    VARIABLE div_temp       : vector_of_signed46(0 TO 11) := (others => (others => '0'));
+    VARIABLE div_temp_0     : vector_of_signed49(0 TO 11) := (others => (others => '0'));
+    VARIABLE add_temp       : vector_of_signed53(0 TO 10) := (others => (others => '0'));
+    VARIABLE cast           : vector_of_signed46(0 TO 11) := (others => (others => '0'));
+    VARIABLE slice_cast     : vector_of_signed49(0 TO 11) := (others => (others => '0'));
+    VARIABLE slice_cast_0   : vector_of_signed49(0 TO 11) := (others => (others => '0'));
+    VARIABLE cast_0         : vector_of_signed49(0 TO 11) := (others => (others => '0'));
+    VARIABLE add_cast       : vector_of_signed77(0 TO 11) := (others => (others => '0'));
+    VARIABLE add_cast_0     : vector_of_signed77(0 TO 11) := (others => (others => '0'));
+    VARIABLE add_temp_0     : vector_of_signed77(0 TO 11) := (others => (others => '0'));
   BEGIN
     xBuffer_temp := xBuffer;
     wBuffer_temp := wBuffer;
