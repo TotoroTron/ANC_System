@@ -34,10 +34,11 @@ architecture Behavioral of nlms_testbench is
     signal weights : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     constant clk_period : time := 10ns;
 begin
-    adapt <= '1'; clk_enable <= '1';
+    adapt <= '1';
     
     TEST : process
     begin
+        
         input <= std_logic_vector(to_signed(300000,24));
         error <= std_logic_vector(to_signed(-20000,24));
         wait until rising_edge(clk);
@@ -45,7 +46,7 @@ begin
         input <= std_logic_vector(to_signed(100000,24));
         error <= std_logic_vector(to_signed(10000,24));
         wait until rising_edge(clk);
-        
+        clk_enable <= '1';
         input <= std_logic_vector(to_signed(-420000,24));
         error <= std_logic_vector(to_signed(-15000,24));
         wait until rising_edge(clk);
@@ -57,6 +58,7 @@ begin
         input <= std_logic_vector(to_signed(-250000,24));
         error <= std_logic_vector(to_signed(3000,24));
         wait until rising_edge(clk);
+        
     end process;
     
     

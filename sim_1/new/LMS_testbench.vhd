@@ -43,8 +43,7 @@ architecture Behavioral of LMS_testbench is
     constant clk_period : time := 10ns;
 
 begin
-    
-    
+
     TEST: process
     begin
         wait until rising_edge(clk);
