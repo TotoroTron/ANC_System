@@ -43,7 +43,6 @@ begin
     --SCLK/LRCLK RATIO : 64x
     --Input Sample Rate Range : 43-54 Khz
     
-    
     --LRCK : 88.2 Khz
     --MCLK : 22.5792 Mhz
     --SCLK = 64 * LRCK = 5.6448 Mhz
@@ -63,17 +62,21 @@ begin
 	
     SHIFT_REG : process(sclk, lrck)
     begin
-        
-        if falling_edge(sclk) then    
-            tx_shift_reg(23 downto 1) <= tx_shift_reg(22 downto 0); --shift left
-            tx_data <= tx_shift_reg(0);
-            
-            rx_shift_reg(22 downto 0) <= rx_shift_reg(23 downto 1); --shift right
-            rx_shift_reg(0) <= rx_data;
-        end if;
-        if lrck'event then
+        if rising_edge(lrck) then
             data_mic <= rx_shift_reg;
             tx_shift_reg <= data_spkr;
+        end if;
+        if falling_edge(lrck) then
+            data_mic <= rx_shift_reg;
+            tx_shift_reg <= data_spkr;
+        end if;
+        if rising_edge(sclk) then    
+            tx_shift_reg(22 downto 0) <= tx_shift_reg(23 downto 1); --shift left     
+            rx_shift_reg(23 downto 1) <= rx_shift_reg(22 downto 0); --shift right
+        end if;
+        if falling_edge(sclk) then
+            tx_data <= tx_shift_reg(0);
+	        rx_shift_reg(0) <= rx_data;
         end if;
     end process;
 end architecture;

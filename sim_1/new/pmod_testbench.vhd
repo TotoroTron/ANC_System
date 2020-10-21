@@ -36,7 +36,7 @@ entity pmod_testbench is
 end pmod_testbench;
 
 architecture Behavioral of pmod_testbench is
-    signal clk, reset : std_logic;
+    signal clk1, clk2, reset, clk_enable, ce_out : std_logic;
     
     signal data_mic : std_logic_vector(23 downto 0);
     signal data_spkr : std_logic_vector(23 downto 0);
@@ -51,27 +51,40 @@ architecture Behavioral of pmod_testbench is
     signal rx_sclk : std_logic;
     signal rx_data : std_logic;
 
-    constant clk_period : time := 44.289 ns;
+    constant clk_period1 : time := 44.289 ns;
+    constant clk_period2 : time := 100us;
 begin
+    reset <= '0';
+    clk_enable <= '1';
     
-    TEST_PROC : process
+    SINE_WAVE : entity work.sine_generator
+    port map(
+        clk => clk2,
+        reset => reset,
+        clk_enable => clk_enable,
+        ce_out => ce_out,
+        Out1 => data_spkr
+    );
+    
+    CLOCK1: process
     begin
-        reset <= '0';
-        data_spkr <= X"123456";
-        wait;
+        clk1 <= '0';
+        wait for clk_period1/2;
+        clk1 <= '1';
+        wait for clk_period1/2;
     end process;
     
-    CLOCK: process
+    CLOCK2: process
     begin
-        clk <= '0';
-        wait for clk_period/2;
-        clk <= '1';
-        wait for clk_period/2;
+        clk2 <= '0';
+        wait for clk_period2/2;
+        clk2 <= '1';
+        wait for clk_period2/2;
     end process;
-    
+        
     UUT: entity work.pmod_i2s2
     port map(
-        clk => clk,
+        clk => clk1,
         reset => reset,
         data_mic => data_mic,
         data_spkr => data_spkr,

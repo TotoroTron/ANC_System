@@ -28,13 +28,12 @@ entity ANC_System is
     port(
         --fpga
         clk : in std_logic;
-        btn0, btn1, btn2, btn3  : in std_logic;
+        btn0, btn1 : in std_logic;
         sw0, sw1 : in std_logic;
         
         refMic : in std_logic_vector(23 downto 0);
         errMic : in std_logic_vector(23 downto 0);
         antiNoise : out std_logic_vector(23 downto 0)
-          
     );
 end ANC_System;
 
