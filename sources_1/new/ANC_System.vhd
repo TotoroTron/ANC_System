@@ -18,7 +18,6 @@
 -- 
 ----------------------------------------------------------------------------------
 
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
@@ -28,12 +27,13 @@ entity ANC_System is
     port(
         --fpga
         clk : in std_logic;
-        btn0, btn1 : in std_logic;
-        sw0, sw1 : in std_logic;
+        btn0 : in std_logic;
+        sw0 : in std_logic;
         
         refMic : in std_logic_vector(23 downto 0);
         errMic : in std_logic_vector(23 downto 0);
-        antiNoise : out std_logic_vector(23 downto 0)
+        antiNoise : out std_logic_vector(23 downto 0);
+        noise : out std_logic_vector(23 downto 0)
     );
 end ANC_System;
 
@@ -48,83 +48,93 @@ architecture rtl of ANC_System is
     signal Waf : vector_of_std_logic_vector24(0 TO 11);
     
     signal nlms_adapt, nlms_ce_out, nlms_clk_en : std_logic;
-    signal SP_en, SP_validIn, SP_validOut : std_logic;
+    signal SP_en, SP_ceOut : std_logic;
     signal SP_FilterOut : std_logic_vector(23 downto 0);
 
-    signal ANC_en, ANC_validIn, ANC_validOut : std_logic;
+    signal ANC_en, ANC_ceOut : std_logic;
     signal ANC_FilterOut, ANC_FilterOut_Negative : std_logic_vector(23 downto 0);
     
-    signal AF_en, AF_ValidIn, AF_validOut : std_logic;
+    signal AF_en, AF_ceOut : std_logic;
     signal AF_FilterOut : std_logic_vector(23 downto 0);
     
-    signal AntiNoiseAdapt, AntiNoiseAdaptDelayed: std_logic_vector(23 downto 0);
+    signal AntiNoiseAdapt : std_logic_vector(23 downto 0);
     
     signal SPE_clkEnable, SPE_ce_out : std_logic;
     signal AFE_clkEnable, AFE_ce_out : std_logic;
     
-    signal trainingNoise : std_logic_vector(23 downto 0) := X"123456";
+    signal trainingNoise, sine_out : std_logic_vector(23 downto 0);
+    signal SINE_en, SINE_ceOut : std_logic;
+    
+    signal count : integer range 0 to 10000000 := 0;
 begin
     
-    antiNoise <= AntiNoiseAdapt;
-    
-    adapt <= sw0;
-    trainingMode <= sw1;
+    enable <= sw0;
     reset <= btn0;
-    enable <= btn1;
     
     sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
-    
     ANC_FilterOut_Negative <= std_logic_vector(-signed(ANC_FilterOut));
-    with enable select AntiNoiseAdapt <= (others => '0') when '0', ANC_FilterOut_Negative when '1';
+    with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when others;
     
-    ANTINOISE_REGISTER : process(clk)
+    with trainingMode select antiNoise <= antiNoiseAdapt when '1', trainingNoise when others;
+    with trainingMode select noise <= sine_out when '1', (others => '0') when others;
+    
+    STIMULUS : process(clk)
     begin
         if rising_edge(clk) then
-            AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
+            if count < 1000000 then
+                count <= count + 1;
+                if count > 625 AND count < 100000 then
+                    adapt <= '1';
+                else
+                    adapt <= '0';
+                end if;
+                if count < 100000 then
+                    trainingMode <= '1';
+                else
+                    trainingMode <= '0';
+                end if;
+            end if;
         end if;
     end process;
     
-    SP_ValidIn <= '1'; SP_en <= '1';
-    SECONDARY_PATH_FILER : entity work.Discrete_FIR_Filter_HDL_Optimized
+    SP_en <= '1';
+    SECONDARY_PATH_FILTER : entity work.FIR_Filter_Subsystem
     port map(
         clk => clk,
         reset => reset,
-        enb => SP_en,
-        dataIn => sum1_out,
-        validIn => SP_ValidIn,
-        Coeff => Wsp,
-        dataOut => SP_FilterOut,
-        validOut => SP_validOut
+        clk_enable => SP_en,
+        input => sum1_out,
+        coeff => Wsp,
+        ce_out => SP_ceOut,
+        output => SP_FilterOut
     );
     
-    ANC_en <= '1'; ANC_validIn <= '1';
-    ANC_FILTER : entity work.Discrete_FIR_Filter_HDL_Optimized
+    ANC_en <= '1';
+    ANC_FILTER : entity work.FIR_Filter_Subsystem
     port map(
         clk => clk,
         reset => reset,
-        enb => ANC_en,
-        dataIn => sum1_out,
-        validIn => ANC_validIn,
-        Coeff => Wanc,
-        dataOut => ANC_FilterOut,
-        validOut => ANC_validOut
+        clk_enable => ANC_en,
+        input => sum1_out,
+        coeff => Wanc,
+        ce_out => ANC_ceOut,
+        output => ANC_FilterOut
     );
     
-    AF_en <= '1'; AF_validIn <= '1';
-    ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_HDL_Optimized
+    AF_en <= '1';
+    ACOUSTIC_FEEDBACK_FILTER : entity work.FIR_Filter_Subsystem
     port map(
         clk => clk,
         reset => reset,
-        enb => AF_en,
-        dataIn => AntiNoiseAdaptDelayed,
-        validIn => AF_validIn,
-        Coeff => Waf,
-        dataOut => AF_FilterOut,
-        validOut => AF_validOut        
+        clk_enable => AF_en,
+        input => antiNoiseAdapt,
+        coeff => Waf,
+        ce_out => AF_ceOut,
+        output => AF_FilterOut
     );
     
     nlms_adapt <= (NOT trainingMode) AND enable;
-    nlms_clk_en <= '1';
+    nlms_clk_en <= SP_ceOut;
     NLMS_UPDATE : entity work.nlmsUpdateSystem
     port map(
         clk => clk,
@@ -137,7 +147,7 @@ begin
         weights => Wanc
     );
     
-    SPE_clkEnable <= '1';
+    SPE_clkEnable <= adapt;
     SECONDARY_PATH_ESTIMATION : entity work.LMSFilter
     port map(
         clk => clk,
@@ -149,7 +159,7 @@ begin
         Out3 => Wsp
     );
     
-    AFE_clkEnable <= '1';
+    AFE_clkEnable <= adapt;
     ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMSFilter
     port map(
         clk => clk,
@@ -159,6 +169,24 @@ begin
         In2 => refMic,
         ce_out => AFE_ce_out,
         Out3 => Waf
+    );
+    
+    TRAINING_NOISE : entity work.PRBS
+    port map(
+        clk => clk,
+        rst => reset,
+        ce => trainingMode,
+        rand => trainingNoise
+    );
+    
+    SINE_en <= trainingMode;
+    SINE_WAVE : entity work.sine_generator
+    port map(
+        clk => clk,
+        reset => reset,
+        clk_enable => SINE_en,
+        ce_out => SINE_ceOut,
+        Out1 => sine_out
     );
     
 end rtl;
