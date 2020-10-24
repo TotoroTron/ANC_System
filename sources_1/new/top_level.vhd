@@ -73,7 +73,7 @@ begin
         tx_axis_s_ready => tx_ready,        --output
         tx_axis_s_last => tx_last,          --input
         
-        rx_axis_m_data => refMic,           --output
+        rx_axis_m_data => errMic,           --output
         rx_axis_m_valid => rx_valid,        --output
         rx_axis_m_ready => rx_ready,        --input
         rx_axis_m_last => rx_last,          --output
