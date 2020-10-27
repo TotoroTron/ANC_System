@@ -42,14 +42,14 @@ set_property -dict { PACKAGE_PIN W18   IOSTANDARD LVCMOS33 } [get_ports { ja_rx_
 set_property -dict { PACKAGE_PIN W19   IOSTANDARD LVCMOS33 } [get_ports { ja_rx_data }]; #IO_L22N_T3_34 Sch=JA4_N
 
 ## Pmod Header JB
-set_property -dict { PACKAGE_PIN Y14   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_mclk }]; #IO_L8N_T1_34 Sch=JB1_N
-set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_lrck }]; #IO_L8P_T1_34 Sch=JB1_P
-set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_sclk }]; #IO_L1N_T0_34 Sch=JB2_N
-set_property -dict { PACKAGE_PIN T11   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_data }]; #IO_L1P_T0_34 Sch=JB2_P
-set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_mclk }]; #IO_L18N_T2_34 Sch=JB3_N
-set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_lrck }]; #IO_L18P_T2_34 Sch=JB3_P
-set_property -dict { PACKAGE_PIN W13   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_sclk }]; #IO_L4N_T0_34 Sch=JB4_N
-set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_data }]; #IO_L4P_T0_34 Sch=JB4_P
+set_property -dict { PACKAGE_PIN Y14   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_lrck }]; #IO_L8N_T1_34 Sch=JB1_N
+set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_mclk }]; #IO_L8P_T1_34 Sch=JB1_P
+set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_data }]; #IO_L1N_T0_34 Sch=JB2_N
+set_property -dict { PACKAGE_PIN T11   IOSTANDARD LVCMOS33 } [get_ports { jb_tx_sclk }]; #IO_L1P_T0_34 Sch=JB2_P
+set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_lrck }]; #IO_L18N_T2_34 Sch=JB3_N
+set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_mclk }]; #IO_L18P_T2_34 Sch=JB3_P
+set_property -dict { PACKAGE_PIN W13   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_data }]; #IO_L4N_T0_34 Sch=JB4_N
+set_property -dict { PACKAGE_PIN V12   IOSTANDARD LVCMOS33 } [get_ports { jb_rx_sclk }]; #IO_L4P_T0_34 Sch=JB4_P
 
 ## Audio Out
 #set_property -dict { PACKAGE_PIN R18   IOSTANDARD LVCMOS33 } [get_ports { aud_pwm }]; #IO_L20N_T3_34 Sch=AUD_PWM

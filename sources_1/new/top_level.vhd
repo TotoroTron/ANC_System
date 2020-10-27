@@ -41,8 +41,8 @@ architecture rtl of top_level is
     signal noiseSpkr, antiNoiseSpkr, refMic, errMic : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last : std_logic;
     signal rx_valid, rx_ready, rx_last : std_logic;
-    signal clk_22Mhz, clk_44Khz, resetn : std_logic := '0';
-    signal count : integer range 0 to 2300;
+    signal clk_22Mhz, clk_44Khz, clk_100Khz, resetn : std_logic := '0';
+    signal count_44Khz, count_100Khz : natural range 0 to 2300;
 begin
     
     PMOD_CLK : clk_wiz_0
@@ -50,14 +50,25 @@ begin
         clk_in1 => clk_100Mhz,
         clk_out1 => clk_22Mhz
     );
-    ANC_CLK : process(clk_100Mhz)
+    CLK_GEN_44Khz : process(clk_100Mhz)
     begin
         if rising_edge(clk_100Mhz) then
-            if count = 2267 then
+            if count_44Khz = 2267 then
                 clk_44Khz <= NOT clk_44Khz;
-                count <= 0;
+                count_44Khz <= 0;
             else
-                count <= count + 1;
+                count_44Khz <= count_44Khz + 1;
+            end if;
+        end if;
+    end process;
+    CLK_GEN_100Khz : process(clk_100Mhz)
+    begin
+        if rising_edge(clk_100Mhz) then
+            if count_100Khz = 499 then
+                clk_100Khz <= NOT clk_100Khz;
+                count_100Khz <= 0;
+            else
+                count_100Khz <= count_100Khz + 1;
             end if;
         end if;
     end process;
@@ -128,7 +139,8 @@ begin
     
     ANC_SYSTEM : entity work.ANC_System
     port map(
-        clk => clk_44Khz,
+        clk_44Khz => clk_44Khz,
+        clk_100Khz => clk_100Khz,
         btn0 => btn0,
         sw0 => sw0,
         refMic => refMic(23 downto 0),

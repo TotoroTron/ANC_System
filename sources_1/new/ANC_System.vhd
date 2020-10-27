@@ -26,7 +26,8 @@ USE work.top_level_pkg.ALL;
 entity ANC_System is
     port(
         --fpga
-        clk : in std_logic;
+        clk_44Khz : in std_logic;
+        clk_100Khz : in std_logic;
         btn0 : in std_logic;
         sw0 : in std_logic;
         
@@ -35,7 +36,7 @@ entity ANC_System is
         antiNoise : out std_logic_vector(23 downto 0);
         noise : out std_logic_vector(23 downto 0)
     );
-end ANC_System;
+end ANC_System;--
 
 architecture rtl of ANC_System is
     signal reset : std_logic;
@@ -78,21 +79,13 @@ begin
     with trainingMode select antiNoise <= antiNoiseAdapt when '1', trainingNoise when others;
     with trainingMode select noise <= sine_out when '1', (others => '0') when others;
     
-    STIMULUS : process(clk)
+    STIMULUS : process(clk_44Khz)
     begin
-        if rising_edge(clk) then
-            if count < 1000000 then
+        if rising_edge(clk_44Khz) then
+            if count < 200001 then
                 count <= count + 1;
-                if count > 625 AND count < 100000 then
-                    adapt <= '1';
-                else
-                    adapt <= '0';
-                end if;
-                if count < 100000 then
-                    trainingMode <= '1';
-                else
-                    trainingMode <= '0';
-                end if;
+                if count > 625 AND count < 200000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 200000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -100,7 +93,7 @@ begin
     SP_en <= '1';
     SECONDARY_PATH_FILTER : entity work.FIR_Filter_Subsystem
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
         clk_enable => SP_en,
         input => sum1_out,
@@ -112,7 +105,7 @@ begin
     ANC_en <= '1';
     ANC_FILTER : entity work.FIR_Filter_Subsystem
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
         clk_enable => ANC_en,
         input => sum1_out,
@@ -124,7 +117,7 @@ begin
     AF_en <= '1';
     ACOUSTIC_FEEDBACK_FILTER : entity work.FIR_Filter_Subsystem
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
         clk_enable => AF_en,
         input => antiNoiseAdapt,
@@ -135,22 +128,21 @@ begin
     
     nlms_adapt <= (NOT trainingMode) AND enable;
     nlms_clk_en <= SP_ceOut;
-    NLMS_UPDATE : entity work.nlmsUpdateSystem
+    NLMS_UPDATE : entity work.LMSUpdate
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
-        clk_enable => nlms_clk_en,
-        input => SP_FilterOut,
-        error_rsvd => errMic,
+        enb => nlms_clk_en,
+        X => SP_FilterOut,
+        E => errMic,
         adapt => nlms_adapt,
-        ce_out => nlms_ce_out,
-        weights => Wanc
+        W => Wanc
     );
     
     SPE_clkEnable <= adapt;
     SECONDARY_PATH_ESTIMATION : entity work.LMSFilter
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
         clk_enable => SPE_clkEnable,
         In1 => trainingNoise,
@@ -162,7 +154,7 @@ begin
     AFE_clkEnable <= adapt;
     ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMSFilter
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         reset => reset,
         clk_enable => AFE_clkEnable,
         In1 => trainingNoise,
@@ -173,7 +165,7 @@ begin
     
     TRAINING_NOISE : entity work.PRBS
     port map(
-        clk => clk,
+        clk => clk_44Khz,
         rst => reset,
         ce => trainingMode,
         rand => trainingNoise
@@ -182,7 +174,7 @@ begin
     SINE_en <= trainingMode;
     SINE_WAVE : entity work.sine_generator
     port map(
-        clk => clk,
+        clk => clk_100Khz,
         reset => reset,
         clk_enable => SINE_en,
         ce_out => SINE_ceOut,

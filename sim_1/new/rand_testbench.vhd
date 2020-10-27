@@ -47,18 +47,7 @@ BEGIN
     );
     
     const_coeff <= (X"011111", X"011111", X"000000", X"000000", X"000000", X"000000", X"000000", X"000000", X"000000",X"000000",X"000000",X"000000");
---    FIR: entity work.Discrete_FIR_Filter_HDL_Optimized
---    port map(
---        clk => clk,
---        reset => reset,
---        enb => enb,
---        dataIn => rand,
---        validIn => fir_valid_in,
---        Coeff => const_coeff,
---        dataOut => fir_out,
---        validOut => fir_valid_out
---    );
-    
+
     data_pipeline(0) <= rand;
     rand_delayed <= data_pipeline(18);
     DATA_REGISTER : process(clk)

@@ -21,5 +21,7 @@ PACKAGE top_level_pkg IS
   TYPE vector_of_signed53 IS ARRAY (NATURAL RANGE <>) OF signed(52 DOWNTO 0);
   TYPE vector_of_signed77 IS ARRAY (NATURAL RANGE <>) OF signed(76 DOWNTO 0);
   TYPE vector_of_signed32 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
+  TYPE vector_of_signed72 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
+  TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
 END top_level_pkg;
 

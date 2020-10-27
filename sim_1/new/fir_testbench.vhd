@@ -37,8 +37,8 @@ entity fir_testbench is
 end fir_testbench;
 
 architecture Behavioral of fir_testbench is
-    signal clk, reset, enb, validIn, validOut : std_logic := '0';
-    signal dataIn, dataOut : std_logic_vector(23 downto 0);
+    signal clk, reset, enb, ce_out, clk_enable : std_logic := '0';
+    signal input, output: std_logic_vector(23 downto 0);
     signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => X"400000");
     constant clk_period : time := 10ns;
 
@@ -47,21 +47,22 @@ begin
     
     TEST: process
     begin
+        reset <= '0';
         wait until rising_edge(clk);
-        validIn <= '1'; enb <= '1';
-        dataIn <= std_logic_vector(to_signed(3,24));
-        wait until rising_edge(clk);
-        
-        dataIn <= std_logic_vector(to_signed(1,24));
+        clk_enable <= '1'; enb <= '1';
+        input <= std_logic_vector(to_signed(3,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(4,24));
+        input <= std_logic_vector(to_signed(1,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(2,24));
+        input <= std_logic_vector(to_signed(4,24));
         wait until rising_edge(clk);
         
-        dataIn <= std_logic_vector(to_signed(1,24));
+        input <= std_logic_vector(to_signed(2,24));
+        wait until rising_edge(clk);
+        
+        input <= std_logic_vector(to_signed(1,24));
     
     end process;
     
@@ -73,16 +74,15 @@ begin
         wait for clk_period/2;
     end process;
     
-    UUT: entity work.Discrete_FIR_Filter_HDL_Optimized
+    UUT: entity work.FIR_Filter_Subsystem
     port map(
         clk => clk,
         reset => reset,
-        enb => enb,
-        dataIn => dataIn,
-        validIn => validIn,
-        Coeff => Coeff,
-        dataOut => dataOut,
-        validOut => validOut
+        clk_enable => clk_enable,
+        input => input,
+        coeff => Coeff,
+        ce_out => ce_out,
+        output => output
     );
 
 end Behavioral;

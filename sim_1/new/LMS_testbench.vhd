@@ -37,37 +37,60 @@ entity LMS_testbench is
 end LMS_testbench;
 
 architecture Behavioral of LMS_testbench is
-    signal clk, reset, clk_enable, ce_out : std_logic := '0';
+    signal clk, clk_44Khz, reset, clk_enable, ce_out, adapt : std_logic := '0';
     signal input, desired: std_logic_vector(23 downto 0);
-    signal weights : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
+    signal weights, weights_24 : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     constant clk_period : time := 10ns;
-
+    signal sine_out, rand_out : std_logic_vector(23 downto 0);
+    signal count_44Khz : natural range 0 to 2300;
+    signal noisy_sine : std_logic_vector(23 downto 0);
 begin
 
     TEST: process
     begin
         wait until rising_edge(clk);
-        clk_enable <= '1';
-        input <= std_logic_vector(to_signed(3,24));
-        desired <= std_logic_vector(to_signed(4,24));
+        clk_enable <= '1'; adapt <= '1';
+        input <= X"010111";
+        desired <= X"000011";
         wait until rising_edge(clk);
         
-        input <= std_logic_vector(to_signed(1,24));
-        desired <= std_logic_vector(to_signed(2,24));
+        input <= X"001111";
+        desired <= X"100011";
         wait until rising_edge(clk);
         
-        input <= std_logic_vector(to_signed(4,24));
-        desired <= std_logic_vector(to_signed(-1,24));
+        input <= X"011101";
+        desired <= X"101111";
         wait until rising_edge(clk);
         
-        input <= std_logic_vector(to_signed(2,24));
-        desired <= std_logic_vector(to_signed(-2,24));
+        input <= X"011000";
+        desired <= X"101111";
         wait until rising_edge(clk);
         
-        input <= std_logic_vector(to_signed(1,24));
-        desired <= std_logic_vector(to_signed(1,24));
+        input <= X"111111";
+        desired <= X"110011";
     
     end process;
+    
+    reset <= '0'; clk_enable <= '1';
+    
+--    sine : entity work.sine_generator
+--    port map(
+--        clk => clk,
+--        reset => reset,
+--        clk_enable => clk_enable,
+--        ce_out => ce_out,
+--        Out1 => sine_out
+--    );
+    
+--    random : entity work.PRBS
+--    port map(
+--        clk => clk,
+--        rst => reset,
+--        ce => clk_enable,
+--        rand => rand_out
+--    );
+    
+--    noisy_sine <= std_logic_vector( signed(sine_out) + signed(rand_out(7 downto 0)) );
     
     CLOCK: process
     begin
@@ -77,15 +100,21 @@ begin
         wait for clk_period/2;
     end process;
     
-    UUT: entity work.LMSFilter
+--    FIR : entity work.FIR_Filter_Subsystem
+--    port map(
+    
+--    );
+    
+    LMS_24: entity work.LMS_Filter_24_Subsystem
     port map(
         clk => clk,
         reset => reset,
         clk_enable => clk_enable,
-        In1 => input,
-        In2 => desired,
+        input => input,
+        desired => desired,
+        adapt => adapt,
         ce_out => ce_out,
-        Out3 => weights
+        weights => weights_24
     );
 
 end Behavioral;

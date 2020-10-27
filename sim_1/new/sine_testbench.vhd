@@ -38,7 +38,7 @@ end sine_testbench;
 architecture Behavioral of sine_testbench is
     signal clk, reset, clk_enable, ce_out : std_logic;
     signal sine_out : std_logic_vector(23 downto 0);
-    constant clk_period : time := 100us;
+    constant clk_period : time := 10ns;
 begin
     TEST_PROC : process
     begin
