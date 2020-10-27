@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 USE work.top_level_pkg.ALL;
 
 entity top_testbench is
---  Port ( );
+--  Port ( );--
 end top_testbench;
 
 architecture Behavioral of top_testbench is

@@ -41,7 +41,7 @@ USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 USE work.top_level_pkg.ALL;
 
-ENTITY LMS_Filter_24_Subsystem IS
+ENTITY LMS_Filter_24 IS
   PORT( clk                               :   IN    std_logic;
         reset                             :   IN    std_logic;
         clk_enable                        :   IN    std_logic;
@@ -53,10 +53,10 @@ ENTITY LMS_Filter_24_Subsystem IS
 --        error_rsvd                        :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         weights                           :   OUT   vector_of_std_logic_vector24(0 TO 11)  -- sfix24_En24 [12]
         );
-END LMS_Filter_24_Subsystem;
+END LMS_Filter_24;
 
 --
-ARCHITECTURE rtl OF LMS_Filter_24_Subsystem IS
+ARCHITECTURE rtl OF LMS_Filter_24 IS
 
   -- Constants
   CONSTANT C_LMS_FILTER_24_STEP_SIZE      : signed(23 DOWNTO 0) := 

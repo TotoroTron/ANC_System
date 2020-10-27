@@ -31,6 +31,7 @@ entity ANC_System is
         btn0 : in std_logic;
         sw0 : in std_logic;
         
+        -- signals : fixed point, signed, 24 bit, binary point at 24
         refMic : in std_logic_vector(23 downto 0);
         errMic : in std_logic_vector(23 downto 0);
         antiNoise : out std_logic_vector(23 downto 0);
@@ -39,32 +40,32 @@ entity ANC_System is
 end ANC_System;--
 
 architecture rtl of ANC_System is
-    signal reset : std_logic;
-    signal sum1_out : std_logic_vector(23 downto 0);
+    signal reset : std_logic := '0';
+    signal sum1_out : std_logic_vector(23 downto 0) := (others => '0');
     
-    signal adapt, enable, trainingMode : std_logic;
+    signal adapt, enable, trainingMode : std_logic := '0';
 
-    signal Wanc : vector_of_std_logic_vector24(0 TO 11);
-    signal Wsp : vector_of_std_logic_vector24(0 TO 11);
-    signal Waf : vector_of_std_logic_vector24(0 TO 11);
+    signal Wanc : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));
+    signal Wsp : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));
+    signal Waf : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));
     
-    signal nlms_adapt, nlms_ce_out, nlms_clk_en : std_logic;
-    signal SP_en, SP_ceOut : std_logic;
+    signal nlms_adapt, nlms_ce_out, nlms_clk_en : std_logic := '0';
+    signal SP_en, SP_ceOut : std_logic := '0';
     signal SP_FilterOut : std_logic_vector(23 downto 0);
 
-    signal ANC_en, ANC_ceOut : std_logic;
-    signal ANC_FilterOut, ANC_FilterOut_Negative : std_logic_vector(23 downto 0);
+    signal ANC_en, ANC_ceOut : std_logic := '0';
+    signal ANC_FilterOut, ANC_FilterOut_Negative : std_logic_vector(23 downto 0) := (others => '0');
     
-    signal AF_en, AF_ceOut : std_logic;
-    signal AF_FilterOut : std_logic_vector(23 downto 0);
+    signal AF_en, AF_ceOut : std_logic := '0';
+    signal AF_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
     
-    signal AntiNoiseAdapt : std_logic_vector(23 downto 0);
+    signal AntiNoiseAdapt, AntiNoiseAdaptDelayed : std_logic_vector(23 downto 0) := (others => '0');
     
-    signal SPE_clkEnable, SPE_ce_out : std_logic;
-    signal AFE_clkEnable, AFE_ce_out : std_logic;
+    signal SPE_clkEnable, SPE_ce_out : std_logic := '0';
+    signal AFE_clkEnable, AFE_ce_out : std_logic := '0';
     
-    signal trainingNoise, sine_out : std_logic_vector(23 downto 0);
-    signal SINE_en, SINE_ceOut : std_logic;
+    signal trainingNoise, sine_out : std_logic_vector(23 downto 0) := (others => '0');
+    signal SINE_en, SINE_ceOut : std_logic := '0';
     
     signal count : integer range 0 to 10000000 := 0;
 begin
@@ -74,10 +75,18 @@ begin
     
     sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector(-signed(ANC_FilterOut));
-    with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when others;
     
-    with trainingMode select antiNoise <= antiNoiseAdapt when '1', trainingNoise when others;
-    with trainingMode select noise <= sine_out when '1', (others => '0') when others;
+    with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when '0', (others => '0') when others;
+    
+    with trainingMode select antiNoise <= antiNoiseAdapt when '1', trainingNoise when '0', (others => '0') when others;
+    with trainingMode select noise <= sine_out when '1', (others => '0') when '0', (others => '0') when others;
+    
+    antiNoiseAdapt_REGISTER : process(clk_44Khz)
+    begin
+        if rising_edge(clk_44Khz) then
+            AntiNoiseAdaptDelayed <= AntiNoiseAdapt;            
+        end if;
+    end process;
     
     STIMULUS : process(clk_44Khz)
     begin
@@ -91,44 +100,41 @@ begin
     end process;
     
     SP_en <= '1';
-    SECONDARY_PATH_FILTER : entity work.FIR_Filter_Subsystem
+    SECONDARY_PATH_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_44Khz,
         reset => reset,
-        clk_enable => SP_en,
-        input => sum1_out,
-        coeff => Wsp,
-        ce_out => SP_ceOut,
-        output => SP_FilterOut
+        enb => SP_en,
+        Discrete_FIR_Filter_in => sum1_out,
+        Discrete_FIR_Filter_coeff => Wsp,
+        Discrete_FIR_Filter_out => SP_FilterOut
     );
     
     ANC_en <= '1';
-    ANC_FILTER : entity work.FIR_Filter_Subsystem
+    ANC_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_44Khz,
         reset => reset,
-        clk_enable => ANC_en,
-        input => sum1_out,
-        coeff => Wanc,
-        ce_out => ANC_ceOut,
-        output => ANC_FilterOut
+        enb => ANC_en,
+        Discrete_FIR_Filter_in => sum1_out,
+        Discrete_FIR_Filter_coeff => Wanc,
+        Discrete_FIR_Filter_out => ANC_FilterOut
     );
     
     AF_en <= '1';
-    ACOUSTIC_FEEDBACK_FILTER : entity work.FIR_Filter_Subsystem
+    ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_44Khz,
         reset => reset,
-        clk_enable => AF_en,
-        input => antiNoiseAdapt,
-        coeff => Waf,
-        ce_out => AF_ceOut,
-        output => AF_FilterOut
+        enb => AF_en,
+        Discrete_FIR_Filter_in => antiNoiseAdaptDelayed,
+        Discrete_FIR_Filter_coeff => Waf,
+        Discrete_FIR_Filter_out => AF_FilterOut
     );
     
     nlms_adapt <= (NOT trainingMode) AND enable;
     nlms_clk_en <= SP_ceOut;
-    NLMS_UPDATE : entity work.LMSUpdate
+    LMS_UPDATE : entity work.LMSUpdate
     port map(
         clk => clk_44Khz,
         reset => reset,
@@ -140,27 +146,29 @@ begin
     );
     
     SPE_clkEnable <= adapt;
-    SECONDARY_PATH_ESTIMATION : entity work.LMSFilter
+    SECONDARY_PATH_ESTIMATION : entity work.LMS_Filter_24
     port map(
         clk => clk_44Khz,
         reset => reset,
         clk_enable => SPE_clkEnable,
-        In1 => trainingNoise,
-        In2 => errMic,
+        input => trainingNoise,
+        desired => errMic,
+        adapt => adapt,
         ce_out => SPE_ce_out,
-        Out3 => Wsp
+        weights => Wsp
     );
     
     AFE_clkEnable <= adapt;
-    ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMSFilter
+    ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMS_Filter_24
     port map(
         clk => clk_44Khz,
         reset => reset,
         clk_enable => AFE_clkEnable,
-        In1 => trainingNoise,
-        In2 => refMic,
+        input => trainingNoise,
+        desired => refMic,
+        adapt => adapt,
         ce_out => AFE_ce_out,
-        Out3 => Waf
+        weights => Waf
     );
     
     TRAINING_NOISE : entity work.PRBS

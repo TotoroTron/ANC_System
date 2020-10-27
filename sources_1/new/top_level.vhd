@@ -2,7 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 USE work.top_level_pkg.ALL;
-
+--
 entity top_level is
 	port(
         clk_100Mhz : in std_logic; --100 Mhz
@@ -37,10 +37,10 @@ end entity top_level;
 
 architecture rtl of top_level is
     component clk_wiz_0 port(clk_in1 : in std_logic; clk_out1 : out std_logic); end component;
-    signal reset : std_logic;
-    signal noiseSpkr, antiNoiseSpkr, refMic, errMic : std_logic_vector(31 downto 0);
-    signal tx_valid, tx_ready, tx_last : std_logic;
-    signal rx_valid, rx_ready, rx_last : std_logic;
+    signal reset : std_logic := '0';
+    signal noiseSpkr, antiNoiseSpkr, refMic, errMic : std_logic_vector(31 downto 0) := (others => '0');
+    signal tx_valid, tx_ready, tx_last : std_logic := '0';
+    signal rx_valid, rx_ready, rx_last : std_logic := '0';
     signal clk_22Mhz, clk_44Khz, clk_100Khz, resetn : std_logic := '0';
     signal count_44Khz, count_100Khz : natural range 0 to 2300;
 begin

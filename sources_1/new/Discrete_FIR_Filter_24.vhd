@@ -34,67 +34,67 @@ END Discrete_FIR_Filter_24;
 ARCHITECTURE rtl OF Discrete_FIR_Filter_24 IS
 
   -- Signals
-  SIGNAL Discrete_FIR_Filter_in_signed    : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_0      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL delay_pipeline_1                 : vector_of_signed24(0 TO 10);  -- sfix24_En24 [11]
-  SIGNAL product1                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL delay_pipeline_0                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_1      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product2                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast                   : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL adder_add_cast_1                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum1                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_1_1               : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_2      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product3                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_2                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum2                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_2                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_3      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product4                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_3                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum3                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_3                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_4      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product5                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_4                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum4                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_4                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_5      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product6                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_5                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum5                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_5                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_6      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product7                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_6                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum6                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_6                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_7      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product8                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_7                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum7                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_7                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_8      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product9                         : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_8                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum8                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_8                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_9      : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product10                        : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_9                 : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum9                             : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_9                 : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_10     : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product11                        : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_10                : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum10                            : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL delay_pipeline_10                : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL Discrete_FIR_Filter_coeff_11     : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL product12                        : signed(47 DOWNTO 0);  -- sfix48_En48
-  SIGNAL adder_add_cast_11                : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL sum11                            : signed(51 DOWNTO 0);  -- sfix52_En48
-  SIGNAL output_typeconvert               : signed(23 DOWNTO 0);  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_in_signed    : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_0      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL delay_pipeline_1                 : vector_of_signed24(0 TO 10) := (others => (others => '0'));  -- sfix24_En24 [11]
+  SIGNAL product1                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL delay_pipeline_0                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_1      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product2                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast                   : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL adder_add_cast_1                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum1                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_1_1               : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_2      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product3                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_2                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum2                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_2                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_3      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product4                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_3                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum3                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_3                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_4      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product5                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_4                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum4                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_4                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_5      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product6                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_5                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum5                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_5                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_6      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product7                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_6                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum6                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_6                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_7      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product8                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_7                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum7                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_7                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_8      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product9                         : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_8                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum8                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_8                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_9      : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product10                        : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_9                 : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum9                             : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_9                 : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_10     : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product11                        : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_10                : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum10                            : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL delay_pipeline_10                : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL Discrete_FIR_Filter_coeff_11     : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL product12                        : signed(47 DOWNTO 0) := (others => '0');  -- sfix48_En48
+  SIGNAL adder_add_cast_11                : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL sum11                            : signed(51 DOWNTO 0) := (others => '0');  -- sfix52_En48
+  SIGNAL output_typeconvert               : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
 
 BEGIN
   Discrete_FIR_Filter_in_signed <= signed(Discrete_FIR_Filter_in);
