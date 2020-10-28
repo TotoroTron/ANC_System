@@ -65,7 +65,7 @@ architecture rtl of ANC_System is
     signal AFE_clkEnable, AFE_ce_out : std_logic := '0';
     
     signal trainingNoise, sine_out : std_logic_vector(23 downto 0) := (others => '0');
-    signal SINE_en, SINE_ceOut : std_logic := '0';
+    signal SINE_en, SINE_ceOut, rand_en : std_logic := '0';
     
     signal count : integer range 0 to 10000000 := 0;
 begin
@@ -78,8 +78,8 @@ begin
     
     with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when '0', (others => '0') when others;
     
-    with trainingMode select antiNoise <= antiNoiseAdapt when '1', trainingNoise when '0', (others => '0') when others;
-    with trainingMode select noise <= sine_out when '1', (others => '0') when '0', (others => '0') when others;
+    with trainingMode select antiNoise <= antiNoiseAdapt when '0', trainingNoise when '1', (others => '0') when others;
+    with trainingMode select noise <= sine_out when '0', (others => '0') when '1', (others => '0') when others;
     
     antiNoiseAdapt_REGISTER : process(clk_44Khz)
     begin
@@ -92,7 +92,7 @@ begin
     begin
         if rising_edge(clk_44Khz) then
             if count < 200001 then
-                count <= count + 1;
+                count <= count + 1; --625, 200000
                 if count > 625 AND count < 200000 then adapt <= '1'; else adapt <= '0'; end if;
                 if count < 200000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
@@ -171,15 +171,16 @@ begin
         weights => Waf
     );
     
+    rand_en <= '1';
     TRAINING_NOISE : entity work.PRBS
     port map(
         clk => clk_44Khz,
         rst => reset,
-        ce => trainingMode,
+        ce => rand_en,
         rand => trainingNoise
     );
     
-    SINE_en <= trainingMode;
+    SINE_en <= '1';
     SINE_WAVE : entity work.sine_generator
     port map(
         clk => clk_100Khz,

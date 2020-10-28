@@ -44,35 +44,6 @@ architecture rtl of top_level is
     signal clk_22Mhz, clk_44Khz, clk_100Khz, resetn : std_logic := '0';
     signal count_44Khz, count_100Khz : natural range 0 to 2300;
 begin
-    
-    PMOD_CLK : clk_wiz_0
-    port map(
-        clk_in1 => clk_100Mhz,
-        clk_out1 => clk_22Mhz
-    );
-    CLK_GEN_44Khz : process(clk_100Mhz)
-    begin
-        if rising_edge(clk_100Mhz) then
-            if count_44Khz = 2267 then
-                clk_44Khz <= NOT clk_44Khz;
-                count_44Khz <= 0;
-            else
-                count_44Khz <= count_44Khz + 1;
-            end if;
-        end if;
-    end process;
-    CLK_GEN_100Khz : process(clk_100Mhz)
-    begin
-        if rising_edge(clk_100Mhz) then
-            if count_100Khz = 499 then
-                clk_100Khz <= NOT clk_100Khz;
-                count_100Khz <= 0;
-            else
-                count_100Khz <= count_100Khz + 1;
-            end if;
-        end if;
-    end process;
-    
     resetn <= '1';
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
@@ -148,5 +119,35 @@ begin
         antiNoise => antiNoiseSpkr(23 downto 0),
         noise => noiseSpkr(23 downto 0)
     );
+    
+    PMOD_CLK : clk_wiz_0
+    port map(
+        clk_in1 => clk_100Mhz,
+        clk_out1 => clk_22Mhz
+    );
+    
+    CLK_GEN_44Khz : process(clk_100Mhz)
+    begin
+        if rising_edge(clk_100Mhz) then
+            if count_44Khz = 2267 then
+                clk_44Khz <= NOT clk_44Khz;
+                count_44Khz <= 0;
+            else
+                count_44Khz <= count_44Khz + 1;
+            end if;
+        end if;
+    end process;
+    
+    CLK_GEN_100Khz : process(clk_100Mhz)
+    begin
+        if rising_edge(clk_100Mhz) then
+            if count_100Khz = 499 then
+                clk_100Khz <= NOT clk_100Khz;
+                count_100Khz <= 0;
+            else
+                count_100Khz <= count_100Khz + 1;
+            end if;
+        end if;
+    end process;
     
 end architecture rtl;
