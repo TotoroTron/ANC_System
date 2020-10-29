@@ -37,61 +37,16 @@ entity LMS_testbench is
 end LMS_testbench;
 
 architecture Behavioral of LMS_testbench is
-    signal clk, clk_44Khz, reset, clk_enable, ce_out, adapt : std_logic := '0';
-    signal input, desired: std_logic_vector(23 downto 0);
-    signal weights, weights_24 : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
+    signal clk, clk_44Khz, reset, clk_enable, ce_out, LMS_ceout, adapt : std_logic := '0';
     constant clk_period : time := 10ns;
-    signal sine_out, rand_out : std_logic_vector(23 downto 0);
-    signal count_44Khz : natural range 0 to 2300;
-    signal noisy_sine : std_logic_vector(23 downto 0);
+    
+    signal LMS_input, LMS_desired: std_logic_vector(23 downto 0);
+    signal LMS_Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
+    
+    signal sine_out, stair_sequence, noisy_sine  : std_logic_vector(23 downto 0);
+    signal tmp : std_logic_vector(23 downto 0) := (others => '0');
 begin
 
-    TEST: process
-    begin
-        wait until rising_edge(clk);
-        clk_enable <= '1'; adapt <= '1';
-        input <= X"010111";
-        desired <= X"000011";
-        wait until rising_edge(clk);
-        
-        input <= X"001111";
-        desired <= X"100011";
-        wait until rising_edge(clk);
-        
-        input <= X"011101";
-        desired <= X"101111";
-        wait until rising_edge(clk);
-        
-        input <= X"011000";
-        desired <= X"101111";
-        wait until rising_edge(clk);
-        
-        input <= X"111111";
-        desired <= X"110011";
-    
-    end process;
-    
-    reset <= '0'; clk_enable <= '1';
-    
---    sine : entity work.sine_generator
---    port map(
---        clk => clk,
---        reset => reset,
---        clk_enable => clk_enable,
---        ce_out => ce_out,
---        Out1 => sine_out
---    );
-    
---    random : entity work.PRBS
---    port map(
---        clk => clk,
---        rst => reset,
---        ce => clk_enable,
---        rand => rand_out
---    );
-    
---    noisy_sine <= std_logic_vector( signed(sine_out) + signed(rand_out(7 downto 0)) );
-    
     CLOCK: process
     begin
         clk <= '0';
@@ -100,16 +55,63 @@ begin
         wait for clk_period/2;
     end process;
     
-    LMS_24: entity work.LMS_Filter_24
+    reset <= '0'; clk_enable <= '1';
+    
+    sine : entity work.sine_generator
     port map(
         clk => clk,
         reset => reset,
         clk_enable => clk_enable,
-        input => input,
-        desired => desired,
-        adapt => adapt,
         ce_out => ce_out,
-        weights => weights_24
+        Out1 => sine_out
     );
+    
+    REPEATING_SEQUENCE : process
+    begin
+        stair_sequence <= "000100011110101110000101"; -- 0.07
+        wait until rising_edge(clk);
+        
+        tmp <= "000100011110101110000101";
+        stair_sequence <= std_logic_vector(-signed(tmp)); -- -0.05
+        wait until rising_edge(clk);
+        
+        stair_sequence <= "000111000010100011110101"; -- 0.11
+        wait until rising_edge(clk);
+        
+        stair_sequence <= "001001100110011001100110"; --0.15
+        wait until rising_edge(clk);
+        
+        tmp <= "000000101000111101011100";
+        stair_sequence <= std_logic_vector(-signed(tmp)); -- -0.01
+        wait until rising_edge(clk);
+        
+        tmp <= "000101110000101000111101";
+        stair_sequence <= std_logic_vector(-signed(tmp)); -- -0.09
+        wait until rising_edge(clk);
+        
+        tmp <= "001000010100011110101110";
+        stair_sequence <= std_logic_vector(-signed(tmp)); -- -0.13
+        wait until rising_edge(clk);
+        
+        stair_sequence <= "000010100011110101110000";
+        wait until rising_edge(clk);
+    end process;
+    
+    noisy_sine <= std_logic_vector( signed(sine_out) + signed(stair_sequence) );
+    
+    LMS : entity work.LMS_Filter_24
+    port map(
+        clk => clk,
+        reset => reset,
+        clk_enable => clk_enable,
+        input => LMS_input,
+        desired => LMS_desired,
+        adapt => adapt,
+        ce_out => LMS_ceout,
+        weights => LMS_Coeff
+    );
+        LMS_input <= noisy_sine;
+        LMS_desired <= sine_out;
+        adapt <= '1';
 
 end Behavioral;

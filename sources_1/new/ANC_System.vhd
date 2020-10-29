@@ -70,10 +70,8 @@ architecture rtl of ANC_System is
     signal count : integer range 0 to 1000000 := 0;
 begin
     
-    enable <= sw0;
-    reset <= btn0;
+
     
-    sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector(-signed(ANC_FilterOut));
     
     with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when '0', (others => '0') when others;
@@ -81,10 +79,19 @@ begin
     with trainingMode select antiNoise <= antiNoiseAdapt when '0', trainingNoise when '1', (others => '0') when others;
     with trainingMode select noise <= sine_out when '0', (others => '0') when '1', (others => '0') when others;
     
-    antiNoiseAdapt_REGISTER : process(clk_44Khz)
+    
+    
+    
+    REGISTER_PROCESS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            AntiNoiseAdaptDelayed <= AntiNoiseAdapt;            
+            enable <= sw0;
+            reset <= btn0;
+            sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
+            AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
+            
+            
+            
         end if;
     end process;
     
