@@ -70,28 +70,18 @@ architecture rtl of ANC_System is
     signal count : integer range 0 to 1000000 := 0;
 begin
     
-
-    
+    enable <= sw0;
+    reset <= btn0;
+    sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector(-signed(ANC_FilterOut));
-    
-    with enable select AntiNoiseAdapt <= ANC_FilterOut_Negative when '1', (others => '0') when '0', (others => '0') when others;
-    
-    with trainingMode select antiNoise <= antiNoiseAdapt when '0', trainingNoise when '1', (others => '0') when others;
-    with trainingMode select noise <= sine_out when '0', (others => '0') when '1', (others => '0') when others;
-    
-    
-    
     
     REGISTER_PROCESS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            enable <= sw0;
-            reset <= btn0;
-            sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
             AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
-            
-            
-            
+            if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
+            if trainingMode = '1' then antiNoise <= trainingNoise; else antiNoise <= antiNoiseAdapt; end if;
+            if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_out; end if;           
         end if;
     end process;
     
@@ -101,7 +91,7 @@ begin
             if count < 200002 then
                 count <= count + 1; --625, 200000
                 if count > 625 AND count < 240000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 40000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count < 240000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -140,7 +130,7 @@ begin
     );
     
     nlms_adapt <= (NOT trainingMode) AND enable;
-    nlms_clk_en <= SP_ceOut;
+    nlms_clk_en <= '1';
     LMS_UPDATE : entity work.LMSUpdate
     port map(
         clk => clk_44Khz,

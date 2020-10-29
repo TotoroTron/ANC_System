@@ -49,7 +49,7 @@ begin
 
     TEST_PROC : process
     begin
-        reset <= '0';
+        btn0 <= '0'; sw0 <= '0'; reset <= '0';
         clk_enable <= '1';
         for i in 0 to 1400 loop
         wait until rising_edge(clk_44Khz);
@@ -74,29 +74,7 @@ begin
         ce => clk_enable,
         rand => rand_out
     );
-    
-    noisy_sine <= std_logic_vector( signed(sine_out) + signed(rand_out(7 downto 0) ) );
 
-    CLOCK: process
-    begin
-        clk_100Mhz <= '0';
-        wait for clk_period/2;
-        clk_100Mhz <= '1';
-        wait for clk_period/2;
-    end process;
-    
-    CLK_GEN_44Khz : process(clk_100Mhz)
-    begin
-        if rising_edge(clk_100Mhz) then
-            if count_44Khz = 2267 then
-                clk_44Khz <= NOT clk_44Khz;
-                count_44Khz <= 0;
-            else
-                count_44Khz <= count_44Khz + 1;
-            end if;
-        end if;
-    end process;
-    
     CLK_GEN_100Khz : process(clk_100Mhz)
     begin
         if rising_edge(clk_100Mhz) then
@@ -120,6 +98,26 @@ begin
         antiNoise => antiNoiseSpkr(23 downto 0),
         noise => noiseSpkr(23 downto 0)
     );
+    errMic(23 downto 0) <= rand_out; refMic(23 downto 0) <= sine_out;
     
+    CLOCK: process
+    begin
+        clk_100Mhz <= '0';
+        wait for clk_period/2;
+        clk_100Mhz <= '1';
+        wait for clk_period/2;
+    end process;
+    
+    CLK_GEN_44Khz : process(clk_100Mhz)
+    begin
+        if rising_edge(clk_100Mhz) then
+            if count_44Khz = 2267 then
+                clk_44Khz <= NOT clk_44Khz;
+                count_44Khz <= 0;
+            else
+                count_44Khz <= count_44Khz + 1;
+            end if;
+        end if;
+    end process;
 
 end Behavioral;
