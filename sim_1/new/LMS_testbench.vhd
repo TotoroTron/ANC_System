@@ -100,12 +100,7 @@ begin
         wait for clk_period/2;
     end process;
     
---    FIR : entity work.FIR_Filter_Subsystem
---    port map(
-    
---    );
-    
-    LMS_24: entity work.LMS_Filter_24_Subsystem
+    LMS_24: entity work.LMS_Filter_24
     port map(
         clk => clk,
         reset => reset,

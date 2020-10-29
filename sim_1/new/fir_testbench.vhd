@@ -38,34 +38,37 @@ end fir_testbench;
 
 architecture Behavioral of fir_testbench is
     signal clk, reset, enb, ce_out, clk_enable : std_logic := '0';
-    signal input, output: std_logic_vector(23 downto 0);
-    signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => X"400000");
+    signal fir_in, fir_out, sine_out: std_logic_vector(23 downto 0);
+    signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     constant clk_period : time := 10ns;
-
+    signal dummy : std_logic_vector(23 downto 0):= X"200000";
+    signal dummy_out : std_logic_vector(23 downto 0);
 begin
-    
-    
-    TEST: process
+    dummy_out <= std_logic_vector(-signed(dummy));
+    STIMULUS : process
     begin
-        reset <= '0';
         wait until rising_edge(clk);
-        clk_enable <= '1'; enb <= '1';
-        input <= std_logic_vector(to_signed(3,24));
+        enb <= '1'; clk_enable <= '1';
+        for i in 0 to 500 loop
         wait until rising_edge(clk);
-        
-        input <= std_logic_vector(to_signed(1,24));
-        wait until rising_edge(clk);
-        
-        input <= std_logic_vector(to_signed(4,24));
-        wait until rising_edge(clk);
-        
-        input <= std_logic_vector(to_signed(2,24));
-        wait until rising_edge(clk);
-        
-        input <= std_logic_vector(to_signed(1,24));
-    
+        end loop;
+
+        wait;
     end process;
     
+        Coeff(0) <= X"400000"; --0.25
+        Coeff(1) <= X"C00000"; ---0.25
+        Coeff(2) <= X"200000"; --0.125
+        Coeff(3) <= X"E00000"; ---0.125
+    SINE : entity work.sine_generator
+    port map(
+        clk => clk,
+        reset => reset,
+        clk_enable => clk_enable,
+        ce_out => ce_out,
+        Out1 => sine_out
+    );
+
     CLOCK: process
     begin
         clk <= '0';
@@ -74,15 +77,14 @@ begin
         wait for clk_period/2;
     end process;
     
-    UUT: entity work.FIR_Filter_Subsystem
+    UUT: entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk,
         reset => reset,
-        clk_enable => clk_enable,
-        input => input,
-        coeff => Coeff,
-        ce_out => ce_out,
-        output => output
+        enb => enb,
+        Discrete_FIR_Filter_in => sine_out,
+        Discrete_FIR_Filter_coeff => Coeff,
+        Discrete_FIR_Filter_out => fir_out
     );
 
 end Behavioral;

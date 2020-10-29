@@ -82,19 +82,19 @@ begin
         wait for clk_period2/2;
     end process;
         
-    UUT: entity work.pmod_i2s2
-    port map(
-        clk => clk1,
-        reset => reset,
-        data_mic => data_mic,
-        data_spkr => data_spkr,
-        tx_mclk => tx_mclk,
-        tx_lrck => tx_lrck,
-        tx_sclk => tx_sclk,
-        tx_data => tx_data,
-        rx_mclk => rx_mclk,
-        rx_lrck => rx_lrck,
-        rx_sclk => rx_sclk,
-        rx_data => rx_data
-    );
+--    UUT: entity work.pmod_i2s2
+--    port map(
+--        clk => clk1,
+--        reset => reset,
+--        data_mic => data_mic,
+--        data_spkr => data_spkr,
+--        tx_mclk => tx_mclk,
+--        tx_lrck => tx_lrck,
+--        tx_sclk => tx_sclk,
+--        tx_data => tx_data,
+--        rx_mclk => rx_mclk,
+--        rx_lrck => rx_lrck,
+--        rx_sclk => rx_sclk,
+--        rx_data => rx_data
+--    );
 end Behavioral;

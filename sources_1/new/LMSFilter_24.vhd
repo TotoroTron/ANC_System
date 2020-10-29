@@ -202,10 +202,10 @@ BEGIN
 
   LMS_Filter_24_del_temp_process1 : PROCESS (clk, reset)
   BEGIN
-    IF reset = '1' THEN
-      data_pipeline_tmp <= (OTHERS => (OTHERS => '0'));
-    ELSIF clk'event AND clk = '1' THEN
-      IF enb = '1' THEN
+    IF clk'event AND clk = '1' THEN
+      IF reset = '1' THEN
+        data_pipeline_tmp <= (OTHERS => (OTHERS => '0'));
+      ELSIF enb = '1' THEN
         data_pipeline_tmp(0 TO 9) <= data_pipeline_tmp(1 TO 10);
         data_pipeline_tmp(10) <= input_signed;
       END IF;

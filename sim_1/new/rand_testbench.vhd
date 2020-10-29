@@ -35,16 +35,16 @@ BEGIN
     end process;
 
     reset <= '0';
-    LMS: entity work.LMSFilter
-    port map(
-        clk => clk,
-        reset => reset,
-        clk_enable => fir_valid_out,
-        In1 => rand_delayed, --input
-        In2 => fir_out, --desired
-        ce_out => lms_ce_out,
-        Out3 => weights
-    );
+--    LMS: entity work.LMSFilter
+--    port map(
+--        clk => clk,
+--        reset => reset,
+--        clk_enable => fir_valid_out,
+--        In1 => rand_delayed, --input
+--        In2 => fir_out, --desired
+--        ce_out => lms_ce_out,
+--        Out3 => weights
+--    );
     
     const_coeff <= (X"011111", X"011111", X"000000", X"000000", X"000000", X"000000", X"000000", X"000000", X"000000",X"000000",X"000000",X"000000");
 

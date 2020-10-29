@@ -128,10 +128,10 @@ module axis_i2s2 (
     reg [31:0] rx_data_l = 32'b0;
     reg [31:0] rx_data_r = 32'b0;
     always@(posedge axis_clk)
-        if (axis_resetn == 1'b0)
+        if (axis_resetn == 1'b0) begin
             //rx_data_l <= 32'b0;
             rx_data_r <= 32'b0;
-        else if (count == EOF_COUNT && rx_axis_m_valid == 1'b0) begin
+        end else if (count == EOF_COUNT && rx_axis_m_valid == 1'b0) begin
             //rx_data_l <= {8'b0, rx_data_l_shift};
             rx_data_r <= {8'b0, rx_data_r_shift};
         end

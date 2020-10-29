@@ -103,10 +103,10 @@ BEGIN
 
   Delay_Pipeline_process : PROCESS (clk, reset)
   BEGIN
-    IF reset = '1' THEN
-      delay_pipeline_1 <= (OTHERS => to_signed(16#000000#, 24));
-    ELSIF clk'EVENT AND clk = '1' THEN
-      IF enb = '1' THEN
+    IF clk'EVENT AND clk = '1' THEN
+      IF reset = '1' THEN
+        delay_pipeline_1 <= (OTHERS => to_signed(16#000000#, 24));
+      ELSIF enb = '1' THEN
         delay_pipeline_1(0) <= Discrete_FIR_Filter_in_signed;
         delay_pipeline_1(1 TO 10) <= delay_pipeline_1(0 TO 9);
       END IF;

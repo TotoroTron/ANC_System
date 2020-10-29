@@ -43,7 +43,7 @@ architecture rtl of ANC_System is
     signal reset : std_logic := '0';
     signal sum1_out : std_logic_vector(23 downto 0) := (others => '0');
     
-    signal adapt, enable, trainingMode : std_logic := '0';
+    signal adapt, enable, trainingMode: std_logic := '0';
 
     signal Wanc : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));
     signal Wsp : vector_of_std_logic_vector24(0 TO 11) := (others => (others => '0'));
@@ -51,7 +51,7 @@ architecture rtl of ANC_System is
     
     signal nlms_adapt, nlms_ce_out, nlms_clk_en : std_logic := '0';
     signal SP_en, SP_ceOut : std_logic := '0';
-    signal SP_FilterOut : std_logic_vector(23 downto 0);
+    signal SP_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
 
     signal ANC_en, ANC_ceOut : std_logic := '0';
     signal ANC_FilterOut, ANC_FilterOut_Negative : std_logic_vector(23 downto 0) := (others => '0');
@@ -64,10 +64,10 @@ architecture rtl of ANC_System is
     signal SPE_clkEnable, SPE_ce_out : std_logic := '0';
     signal AFE_clkEnable, AFE_ce_out : std_logic := '0';
     
-    signal trainingNoise, sine_out : std_logic_vector(23 downto 0) := (others => '0');
+    signal trainingNoise, sine_out, rand_out: std_logic_vector(23 downto 0) := (others => '0');
     signal SINE_en, SINE_ceOut, rand_en : std_logic := '0';
     
-    signal count : integer range 0 to 10000000 := 0;
+    signal count : integer range 0 to 1000000 := 0;
 begin
     
     enable <= sw0;
@@ -91,10 +91,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 200001 then
+            if count < 200002 then
                 count <= count + 1; --625, 200000
-                if count > 625 AND count < 200000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 200000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count > 625 AND count < 240000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 40000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -177,8 +177,9 @@ begin
         clk => clk_44Khz,
         rst => reset,
         ce => rand_en,
-        rand => trainingNoise
+        rand => rand_out
     );
+    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 6));
     
     SINE_en <= '1';
     SINE_WAVE : entity work.sine_generator

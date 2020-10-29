@@ -59,17 +59,17 @@ begin
         wait until rising_edge(clk);
     end process;
     
-    UUT : entity work.nlmsUpdateSystem
-    port map(
-        clk => clk,
-        reset => reset,
-        clk_enable => clk_enable,
-        input => input,
-        error_rsvd => error,
-        adapt => adapt,
-        ce_out => ce_out,
-        weights => weights
-    );
+--    UUT : entity work.nlmsUpdateSystem
+--    port map(
+--        clk => clk,
+--        reset => reset,
+--        clk_enable => clk_enable,
+--        input => input,
+--        error_rsvd => error,
+--        adapt => adapt,
+--        ce_out => ce_out,
+--        weights => weights
+--    );
     
     CLOCK: process
     begin

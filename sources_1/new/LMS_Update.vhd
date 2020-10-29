@@ -50,15 +50,15 @@ BEGIN
 
   LMSUpdate_1_process : PROCESS (clk, reset)
   BEGIN
-    IF reset = '1' THEN
-      xBuffer <= (OTHERS => to_signed(16#000000#, 24));
-      wBuffer <= (OTHERS => to_signed(16#000000#, 24));
-    ELSIF clk'EVENT AND clk = '1' THEN
-      IF enb = '1' THEN
+    IF clk'EVENT AND clk = '1' THEN
+      IF reset = '1' THEN
+        xBuffer <= (OTHERS => to_signed(16#000000#, 24));
+        wBuffer <= (OTHERS => to_signed(16#000000#, 24));
+      ELSIF enb = '1' THEN
         xBuffer <= xBuffer_next;
         wBuffer <= wBuffer_next;
       END IF;
-    END IF;
+   END IF;
   END PROCESS LMSUpdate_1_process;
  
   LMSUpdate_1_output : PROCESS (Adapt, E_signed, X_signed, wBuffer, xBuffer)

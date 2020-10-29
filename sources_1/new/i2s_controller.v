@@ -44,7 +44,6 @@ module i2s_controller (
     always@(posedge clk) begin
         s_new_packet_r <= s_new_packet;
     end
-    
 
     always@(posedge clk)
         if (s_new_packet_r == 1'b1)

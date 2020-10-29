@@ -42,19 +42,15 @@ begin
 
  	process (clk, rst, seed, ce)
 	begin
-		if ce = '1' then
-			
-			if (rst = '1') then
-				seed <= (0 => '1', others => '0');
-			end if;
-			
-			if (rising_edge(clk)) then    
-				feedback <= feedback xor (seed(5) xor (seed(3) xor (seed(2) xor seed(0))));
-			
-			seed <= feedback & seed (levels - 1 downto 1);
-			end if;
-			
-		end if;
+        if (rising_edge(clk)) then
+            if (rst = '1') then
+                seed <= (0 => '1', others => '0');
+            elsif ce = '1' then
+                feedback <= feedback xor (seed(5) xor (seed(3) xor (seed(2) xor seed(0))));
+            
+                seed <= feedback & seed (levels - 1 downto 1);
+            end if;
+        end if;
 	end process;	
 
 end Behavioral;
