@@ -26,15 +26,16 @@ USE work.top_level_pkg.ALL;
 entity ANC_System is
     port(
         --fpga
-        clk_44Khz : in std_logic;
-        clk_100Khz : in std_logic;
+        clk_44Khz : in std_logic; --ANC clock
+        clk_22Khz : in std_logic; --Sine 225hz clock
+        clk_41Khz : in std_logic; --Sine 150hz clock
         btn0 : in std_logic;
         sw0 : in std_logic;
         
         -- signals : fixed point, signed, 24 bit, binary point at 24
         refMic : in std_logic_vector(23 downto 0);
         errMic : in std_logic_vector(23 downto 0);
-        antiNoise : out std_logic_vector(23 downto 0);
+        antiNoise : out std_logic_vector(23 downto 0) := (others => '0');
         noise : out std_logic_vector(23 downto 0)
     );
 end ANC_System;--
@@ -64,7 +65,7 @@ architecture rtl of ANC_System is
     signal SPE_clkEnable, SPE_ce_out : std_logic := '0';
     signal AFE_clkEnable, AFE_ce_out : std_logic := '0';
     
-    signal trainingNoise, sine_out, rand_out: std_logic_vector(23 downto 0) := (others => '0');
+    signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0) := (others => '0');
     signal SINE_en, SINE_ceOut, rand_en : std_logic := '0';
     
     signal count : integer range 0 to 1000000 := 0;
@@ -81,17 +82,17 @@ begin
             AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
             if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
             if trainingMode = '1' then antiNoise <= trainingNoise; else antiNoise <= antiNoiseAdapt; end if;
-            if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_out; end if;           
+            if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_sum; end if;           
         end if;
     end process;
     
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 200002 then
+            if count < 360001 then
                 count <= count + 1; --625, 200000
-                if count > 625 AND count < 240000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 240000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count > 625 AND count < 360000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 360000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -176,16 +177,27 @@ begin
         ce => rand_en,
         rand => rand_out
     );
-    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 6));
+    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 4));
     
     SINE_en <= '1';
-    SINE_WAVE : entity work.sine_generator
+    sine_sum <= std_logic_vector(signed(sine_out_225Hz) + signed(sine_out_150Hz));
+    
+    SINE_WAVE_225 : entity work.sine_generator(amplitude_20) --225Hz sine output
     port map(
-        clk => clk_100Khz,
+        clk => clk_22Khz,
         reset => reset,
         clk_enable => SINE_en,
         ce_out => SINE_ceOut,
-        Out1 => sine_out
+        Out1 => sine_out_225Hz
+    );
+    
+    SINE_WAVE_150 : entity work.sine_generator(amplitude_25) --150Hz sine output
+    port map(
+        clk => clk_41Khz,
+        reset => reset,
+        clk_enable => SINE_en,
+        ce_out => SINE_ceOut,
+        Out1 => sine_out_150Hz
     );
     
 end rtl;

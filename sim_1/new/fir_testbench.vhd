@@ -82,9 +82,10 @@ begin
         clk => clk,
         reset => reset,
         enb => enb,
-        Discrete_FIR_Filter_in => sine_out,
+        Discrete_FIR_Filter_in => fir_in,
         Discrete_FIR_Filter_coeff => Coeff,
         Discrete_FIR_Filter_out => fir_out
     );
+    fir_in <= sine_out;
 
 end Behavioral;

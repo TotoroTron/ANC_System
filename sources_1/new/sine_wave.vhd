@@ -47,8 +47,8 @@ ENTITY sine_generator IS
         );
 END sine_generator;
 
-
-ARCHITECTURE rtl OF sine_generator IS
+--AMPLITUDE 0.25 FIXDT(1,24,24)
+ARCHITECTURE amplitude_25 OF sine_generator IS
 
   -- Signals
   SIGNAL enb                              : std_logic;
@@ -187,5 +187,145 @@ BEGIN
 
   ce_out <= clk_enable;
 
-END rtl;
+END amplitude_25;
 
+ARCHITECTURE amplitude_20 OF sine_generator IS
+
+  -- Signals
+  SIGNAL enb                              : std_logic;
+  SIGNAL Sine_Wave_out1                   : signed(23 DOWNTO 0);  -- sfix24_En24
+  SIGNAL address_cnt                      : unsigned(6 DOWNTO 0) := (others => '0');  -- ufix7
+
+BEGIN
+  enb <= clk_enable;
+
+-- ADDRESS COUNTER
+  Sine_Wave_addrcnt_temp_process1 : PROCESS (clk, reset)
+  BEGIN
+    IF reset = '1' THEN
+      address_cnt <= to_unsigned(0, 7);
+    ELSIF clk'event AND clk = '1' THEN
+      IF enb = '1' THEN
+        IF address_cnt >= to_unsigned(99, 7) THEN
+          address_cnt <= to_unsigned(0, 7);
+        ELSE
+          address_cnt <= address_cnt + to_unsigned(1, 7);
+        END IF;
+      END IF;
+    END IF; 
+  END PROCESS Sine_Wave_addrcnt_temp_process1;
+
+-- FULL WAVE LOOKUP TABLE
+  PROCESS(address_cnt)
+  BEGIN
+    CASE address_cnt IS
+      WHEN "0000000" => Sine_Wave_out1 <= "000000000000000000000000";
+      WHEN "0000001" => Sine_Wave_out1 <= "000000110011011100000010";
+      WHEN "0000010" => Sine_Wave_out1 <= "000001100110101011000101";
+      WHEN "0000011" => Sine_Wave_out1 <= "000010011001100000001011";
+      WHEN "0000100" => Sine_Wave_out1 <= "000011001011101110100001";
+      WHEN "0000101" => Sine_Wave_out1 <= "000011111101001001011001";
+      WHEN "0000110" => Sine_Wave_out1 <= "000100101101100100010101";
+      WHEN "0000111" => Sine_Wave_out1 <= "000101011100110011000110";
+      WHEN "0001000" => Sine_Wave_out1 <= "000110001010101001110001";
+      WHEN "0001001" => Sine_Wave_out1 <= "000110110110111100110000";
+      WHEN "0001010" => Sine_Wave_out1 <= "000111100001100000111000";
+      WHEN "0001011" => Sine_Wave_out1 <= "001000001010001011011000";
+      WHEN "0001100" => Sine_Wave_out1 <= "001000110000110001111111";
+      WHEN "0001101" => Sine_Wave_out1 <= "001001010101001010111101";
+      WHEN "0001110" => Sine_Wave_out1 <= "001001110111001101000101";
+      WHEN "0001111" => Sine_Wave_out1 <= "001010010110101111110011";
+      WHEN "0010000" => Sine_Wave_out1 <= "001010110011101011000110";
+      WHEN "0010001" => Sine_Wave_out1 <= "001011001101110111101101";
+      WHEN "0010010" => Sine_Wave_out1 <= "001011100101001111000000";
+      WHEN "0010011" => Sine_Wave_out1 <= "001011111001101011000100";
+      WHEN "0010100" => Sine_Wave_out1 <= "001100001011000110110000";
+      WHEN "0010101" => Sine_Wave_out1 <= "001100011001011101101010";
+      WHEN "0010110" => Sine_Wave_out1 <= "001100100100101100001001";
+      WHEN "0010111" => Sine_Wave_out1 <= "001100101100101111011001";
+      WHEN "0011000" => Sine_Wave_out1 <= "001100110001100101010110";
+      WHEN "0011001" => Sine_Wave_out1 <= "001100110011001100110011";
+      WHEN "0011010" => Sine_Wave_out1 <= "001100110001100101010110";
+      WHEN "0011011" => Sine_Wave_out1 <= "001100101100101111011001";
+      WHEN "0011100" => Sine_Wave_out1 <= "001100100100101100001001";
+      WHEN "0011101" => Sine_Wave_out1 <= "001100011001011101101010";
+      WHEN "0011110" => Sine_Wave_out1 <= "001100001011000110110000";
+      WHEN "0011111" => Sine_Wave_out1 <= "001011111001101011000100";
+      WHEN "0100000" => Sine_Wave_out1 <= "001011100101001111000000";
+      WHEN "0100001" => Sine_Wave_out1 <= "001011001101110111101101";
+      WHEN "0100010" => Sine_Wave_out1 <= "001010110011101011000110";
+      WHEN "0100011" => Sine_Wave_out1 <= "001010010110101111110011";
+      WHEN "0100100" => Sine_Wave_out1 <= "001001110111001101000101";
+      WHEN "0100101" => Sine_Wave_out1 <= "001001010101001010111101";
+      WHEN "0100110" => Sine_Wave_out1 <= "001000110000110001111111";
+      WHEN "0100111" => Sine_Wave_out1 <= "001000001010001011011000";
+      WHEN "0101000" => Sine_Wave_out1 <= "000111100001100000111000";
+      WHEN "0101001" => Sine_Wave_out1 <= "000110110110111100110000";
+      WHEN "0101010" => Sine_Wave_out1 <= "000110001010101001110001";
+      WHEN "0101011" => Sine_Wave_out1 <= "000101011100110011000110";
+      WHEN "0101100" => Sine_Wave_out1 <= "000100101101100100010101";
+      WHEN "0101101" => Sine_Wave_out1 <= "000011111101001001011001";
+      WHEN "0101110" => Sine_Wave_out1 <= "000011001011101110100001";
+      WHEN "0101111" => Sine_Wave_out1 <= "000010011001100000001011";
+      WHEN "0110000" => Sine_Wave_out1 <= "000001100110101011000101";
+      WHEN "0110001" => Sine_Wave_out1 <= "000000110011011100000010";
+      WHEN "0110010" => Sine_Wave_out1 <= "000000000000000000000000";
+      WHEN "0110011" => Sine_Wave_out1 <= "111111001100100011111110";
+      WHEN "0110100" => Sine_Wave_out1 <= "111110011001010100111011";
+      WHEN "0110101" => Sine_Wave_out1 <= "111101100110011111110101";
+      WHEN "0110110" => Sine_Wave_out1 <= "111100110100010001011111";
+      WHEN "0110111" => Sine_Wave_out1 <= "111100000010110110100111";
+      WHEN "0111000" => Sine_Wave_out1 <= "111011010010011011101011";
+      WHEN "0111001" => Sine_Wave_out1 <= "111010100011001100111010";
+      WHEN "0111010" => Sine_Wave_out1 <= "111001110101010110001111";
+      WHEN "0111011" => Sine_Wave_out1 <= "111001001001000011010000";
+      WHEN "0111100" => Sine_Wave_out1 <= "111000011110011111001000";
+      WHEN "0111101" => Sine_Wave_out1 <= "110111110101110100101000";
+      WHEN "0111110" => Sine_Wave_out1 <= "110111001111001110000001";
+      WHEN "0111111" => Sine_Wave_out1 <= "110110101010110101000011";
+      WHEN "1000000" => Sine_Wave_out1 <= "110110001000110010111011";
+      WHEN "1000001" => Sine_Wave_out1 <= "110101101001010000001101";
+      WHEN "1000010" => Sine_Wave_out1 <= "110101001100010100111010";
+      WHEN "1000011" => Sine_Wave_out1 <= "110100110010001000010011";
+      WHEN "1000100" => Sine_Wave_out1 <= "110100011010110001000000";
+      WHEN "1000101" => Sine_Wave_out1 <= "110100000110010100111100";
+      WHEN "1000110" => Sine_Wave_out1 <= "110011110100111001010000";
+      WHEN "1000111" => Sine_Wave_out1 <= "110011100110100010010110";
+      WHEN "1001000" => Sine_Wave_out1 <= "110011011011010011110111";
+      WHEN "1001001" => Sine_Wave_out1 <= "110011010011010000100111";
+      WHEN "1001010" => Sine_Wave_out1 <= "110011001110011010101010";
+      WHEN "1001011" => Sine_Wave_out1 <= "110011001100110011001101";
+      WHEN "1001100" => Sine_Wave_out1 <= "110011001110011010101010";
+      WHEN "1001101" => Sine_Wave_out1 <= "110011010011010000100111";
+      WHEN "1001110" => Sine_Wave_out1 <= "110011011011010011110111";
+      WHEN "1001111" => Sine_Wave_out1 <= "110011100110100010010110";
+      WHEN "1010000" => Sine_Wave_out1 <= "110011110100111001010000";
+      WHEN "1010001" => Sine_Wave_out1 <= "110100000110010100111100";
+      WHEN "1010010" => Sine_Wave_out1 <= "110100011010110001000000";
+      WHEN "1010011" => Sine_Wave_out1 <= "110100110010001000010011";
+      WHEN "1010100" => Sine_Wave_out1 <= "110101001100010100111010";
+      WHEN "1010101" => Sine_Wave_out1 <= "110101101001010000001101";
+      WHEN "1010110" => Sine_Wave_out1 <= "110110001000110010111011";
+      WHEN "1010111" => Sine_Wave_out1 <= "110110101010110101000011";
+      WHEN "1011000" => Sine_Wave_out1 <= "110111001111001110000001";
+      WHEN "1011001" => Sine_Wave_out1 <= "110111110101110100101000";
+      WHEN "1011010" => Sine_Wave_out1 <= "111000011110011111001000";
+      WHEN "1011011" => Sine_Wave_out1 <= "111001001001000011010000";
+      WHEN "1011100" => Sine_Wave_out1 <= "111001110101010110001111";
+      WHEN "1011101" => Sine_Wave_out1 <= "111010100011001100111010";
+      WHEN "1011110" => Sine_Wave_out1 <= "111011010010011011101011";
+      WHEN "1011111" => Sine_Wave_out1 <= "111100000010110110100111";
+      WHEN "1100000" => Sine_Wave_out1 <= "111100110100010001011111";
+      WHEN "1100001" => Sine_Wave_out1 <= "111101100110011111110101";
+      WHEN "1100010" => Sine_Wave_out1 <= "111110011001010100111011";
+      WHEN "1100011" => Sine_Wave_out1 <= "111111001100100011111110";
+      WHEN OTHERS => Sine_Wave_out1 <= "111111001100100011111110";
+    END CASE;
+  END PROCESS;
+
+
+  Out1 <= std_logic_vector(Sine_Wave_out1);
+
+  ce_out <= clk_enable;
+
+END amplitude_20;

@@ -127,7 +127,7 @@ module axis_i2s2 (
     /* AXIS MASTER CONTROLLER */
     reg [31:0] rx_data_l = 32'b0;
     reg [31:0] rx_data_r = 32'b0;
-    always@(posedge axis_clk)
+    always@(posedge axis_clk) begin
         if (axis_resetn == 1'b0) begin
             //rx_data_l <= 32'b0;
             rx_data_r <= 32'b0;
@@ -135,9 +135,10 @@ module axis_i2s2 (
             //rx_data_l <= {8'b0, rx_data_l_shift};
             rx_data_r <= {8'b0, rx_data_r_shift};
         end
+    end
         
     //assign rx_axis_m_data = (rx_axis_m_last == 1'b1) ? rx_data_r : rx_data_l;
-    assign rx_axis_m_data =  rx_data_r;
+    assign rx_axis_m_data = rx_data_r;
         
     always@(posedge axis_clk)
         if (axis_resetn == 1'b0)    
