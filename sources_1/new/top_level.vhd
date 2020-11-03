@@ -42,15 +42,8 @@ architecture rtl of top_level is
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
     signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, resetn : std_logic := '0';
-    signal count_44Khz, count_22Khz, count_41Khz : natural range 0 to 65535;
+    
     signal antiNoiseSpkrBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
-    COMPONENT ILA_0
-        PORT(
-            CLK : IN STD_LOGIC;
-            PROBE0 : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE1 : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
-        );
-    END COMPONENT;
 begin
     resetn <= '1';
     --errMicAmp <= std_logic_vector(shift_left(signed(errMic),4));
@@ -67,13 +60,6 @@ begin
 --            antiNoiseSpkrBuffer(1 to 81) <= antiNoiseSpkrBuffer(0 to 80);
 --        end if;
 --    end process;
-    
-    DEBUGGER : ila_0
-    PORT MAP(
-        clk => clk_44Khz,
-        probe0 => antiNoiseSpkr(23 downto 0),
-        probe1 => noiseSpkr(23 downto 0)
-    );
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
@@ -141,9 +127,7 @@ begin
     
     ANC_SYSTEM : entity work.ANC_System
     port map(
-        clk_44Khz => clk_44Khz,
-        clk_22Khz => clk_22Khz,
-        clk_41Khz => clk_41Khz,
+        clk_100Mhz => clk_100Mhz,
         btn0 => btn0,
         sw0 => sw0,
         refMic => refMic(23 downto 0),
@@ -159,39 +143,5 @@ begin
         clk_out1 => clk_22Mhz
     );
     
-    CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
-    begin
-        if rising_edge(clk_100Mhz) then
-        if count_44Khz = 1417 then
-            clk_44Khz <= NOT clk_44Khz;
-            count_44Khz <= 0;
-        else
-            count_44Khz <= count_44Khz + 1;
-        end if;
-        end if;
-    end process;
-    
-    CLK_GEN_22Khz : process(clk_100Mhz) --22.5Khz
-    begin
-        if rising_edge(clk_100Mhz) then
-        if count_22Khz = 2778 then
-            clk_22Khz <= NOT clk_22Khz;
-            count_22Khz <= 0;
-        else
-            count_22Khz <= count_22Khz + 1;
-        end if;
-        end if;
-    end process;
-    
-    CLK_GEN_41Khz : process(clk_100Mhz) --15Khz
-    begin
-        if rising_edge(clk_100Mhz) then
-        if count_41Khz = 4167 then
-            clk_41Khz <= NOT clk_41Khz;
-            count_41Khz <= 0;
-        else
-            count_41Khz <= count_41Khz + 1;
-        end if;
-        end if;
-    end process;
+
 end architecture rtl;

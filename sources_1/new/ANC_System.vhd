@@ -26,9 +26,7 @@ USE work.top_level_pkg.ALL;
 entity ANC_System is
     port(
         --fpga
-        clk_44Khz : in std_logic; --ANC clock
-        clk_22Khz : in std_logic; --Sine 225hz clock
-        clk_41Khz : in std_logic; --Sine 150hz clock
+        clk_100Mhz : in std_logic;
         btn0 : in std_logic;
         sw0 : in std_logic;
         
@@ -41,7 +39,8 @@ entity ANC_System is
 end ANC_System;--
 
 architecture rtl of ANC_System is
-    signal reset : std_logic := '0';
+    signal reset, clk_44Khz, clk_22Khz, clk_41Khz : std_logic := '0';
+    signal count_44Khz, count_22Khz, count_41Khz : natural range 0 to 65535;
     signal sum1_out : std_logic_vector(23 downto 0) := (others => '0');
     
     signal adapt, enable, trainingMode: std_logic := '0';
@@ -70,6 +69,59 @@ architecture rtl of ANC_System is
     
     signal count : integer range 0 to 1000000 := 0;
 begin
+
+    DEBUGGER : ila_0
+    PORT MAP(
+        clk => clk_100Mhz,
+        probe0 => Waf(0),
+        probe1 => Waf(1),
+        probe2 => Waf(2),
+        probe3 => Waf(3),
+        probe4 => Waf(4),
+        probe5 => Waf(5),
+        probe6 => Waf(6),
+        probe7 => Waf(7),
+        probe8 => Waf(8),
+        probe9 => Waf(9),
+        probe10 => Waf(10),
+        probe11 => Waf(11)
+    );
+    
+    CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
+    begin
+        if rising_edge(clk_100Mhz) then
+        if count_44Khz = 1417 then
+            clk_44Khz <= NOT clk_44Khz;
+            count_44Khz <= 0;
+        else
+            count_44Khz <= count_44Khz + 1;
+        end if;
+        end if;
+    end process;
+    
+    CLK_GEN_22Khz : process(clk_100Mhz) --22.5Khz
+    begin
+        if rising_edge(clk_100Mhz) then
+        if count_22Khz = 2778 then
+            clk_22Khz <= NOT clk_22Khz;
+            count_22Khz <= 0;
+        else
+            count_22Khz <= count_22Khz + 1;
+        end if;
+        end if;
+    end process;
+    
+    CLK_GEN_41Khz : process(clk_100Mhz) --15Khz
+    begin
+        if rising_edge(clk_100Mhz) then
+        if count_41Khz = 4167 then
+            clk_41Khz <= NOT clk_41Khz;
+            count_41Khz <= 0;
+        else
+            count_41Khz <= count_41Khz + 1;
+        end if;
+        end if;
+    end process;
     
     enable <= sw0;
     reset <= btn0;
@@ -89,10 +141,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 360001 then
+            if count < 960001 then
                 count <= count + 1; --625, 200000
-                if count > 625 AND count < 360000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 360000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count > 625 AND count < 960000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 960000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -144,6 +196,7 @@ begin
     );
     
     SPE_clkEnable <= adapt;
+    SPE_ce_out <= adapt;
     SECONDARY_PATH_ESTIMATION : entity work.LMS_Filter_24
     port map(
         clk => clk_44Khz,
@@ -157,6 +210,7 @@ begin
     );
     
     AFE_clkEnable <= adapt;
+    AFE_ce_out <= adapt;
     ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMS_Filter_24
     port map(
         clk => clk_44Khz,
