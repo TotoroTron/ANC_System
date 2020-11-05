@@ -12,7 +12,7 @@ end lmsUpdate_testbench;
 architecture Behavioral of lmsUpdate_testbench is
     signal clk, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
     signal sine_out : std_logic_vector(23 downto 0);
-    constant clk_period : time := 10ns;
+    constant clk_period : time := 22670ns;
         
     signal LMSU_input, LMSU_error: std_logic_vector(23 downto 0) := (others => '0');
     signal LMSU_en : std_logic := '0';
@@ -34,7 +34,6 @@ architecture Behavioral of lmsUpdate_testbench is
     signal PRI_en : std_logic := '0';
     
     signal tmp : vector_of_std_logic_vector24(0 to 15);
-    
     signal summation : std_logic_vector(23 downto 0);
     signal ANC_FilterOut_inv : std_logic_vector(23 downto 0);
 begin
@@ -134,7 +133,7 @@ begin
             tmp(7) <= "001100110011001100110011";
         SP_Coeff(4) <= std_logic_vector(-signed(tmp(7))); -- -0.2
         SP_Coeff(5) <= std_logic_vector(-signed(tmp(7))); -- -0.2    
-        
+        --
     PRIMARY_PATH : entity work.Discrete_FIR_Filter_24 --"lms filter copy in matlab"
     port map(
         clk => clk,
@@ -162,5 +161,5 @@ begin
         PRI_Coeff(11) <= (others => '0');
         
     summation <= std_logic_vector( signed(PRI_FilterOut) + signed(SP_FilterOut));
-            
+    
 end Behavioral;

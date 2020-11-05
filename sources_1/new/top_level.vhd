@@ -38,21 +38,22 @@ end entity top_level;
 architecture rtl of top_level is
     component clk_wiz_0 port(clk_in1 : in std_logic; clk_out1 : out std_logic); end component;
     signal reset : std_logic := '0';
-    signal noise, antiNoise, noiseSpkr, antiNoiseSpkr, refMic, errMic, refMicAmp, errMicAmp: std_logic_vector(31 downto 0) := (others => '0');
+    signal noise, antiNoise, noiseSpkr, antiNoiseSpkr, refMic, errMic, refMicAmp, errMicAmp: std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
     signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, resetn : std_logic := '0';
-    
-    signal antiNoiseSpkrBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
+--    signal antiNoiseSpkrBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
 begin
     resetn <= '1';
-    --errMicAmp <= std_logic_vector(shift_left(signed(errMic),4));
-    errMicAmp <= errMic;
-    --refMicAmp <= std_logic_vector(shift_left(signed(refMic),4));
-    refMicAmp <= refMic;
     
---    antiNoiseSpkr(23 downto 0) <= std_logic_vector(antiNoiseSpkrBuffer(81));
+--    errMicAmp <= std_logic_vector(shift_left(signed(errMic),3));
+--    refMicAmp <= std_logic_vector(shift_left(signed(refMic),3));
     antiNoiseSpkr <= antiNoise;
+    noiseSpkr <= noise;
+    
+    errMicAmp <= errMic;    
+    refMicAmp <= refMic;
+--    antiNoiseSpkr(23 downto 0) <= std_logic_vector(antiNoiseSpkrBuffer(81));
 --    ANTINOISE_BUFFER : process(clk_44khz)
 --    begin
 --        if rising_edge(clk_44khz) then
@@ -68,13 +69,13 @@ begin
         
         tx_axis_s_data => antiNoiseSpkr,    --input
         tx_axis_s_valid => tx_valid,        --input
-        tx_axis_s_ready => ja_tx_ready,        --output
+        tx_axis_s_ready => ja_tx_ready,     --output
         tx_axis_s_last => tx_last,          --input
         
-        rx_axis_m_data => errMicAmp,           --output
-        rx_axis_m_valid => ja_rx_valid,        --output
-        rx_axis_m_ready => rx_ready,        --input 
-        rx_axis_m_last => ja_rx_last,          --output
+        rx_axis_m_data => errMicAmp,        --output
+        rx_axis_m_valid => ja_rx_valid,     --output
+        rx_axis_m_ready => rx_ready,        --input
+        rx_axis_m_last => ja_rx_last,       --output
         
         tx_mclk => ja_tx_mclk,              --output   
         tx_lrck => ja_tx_lrck,              --output   
@@ -84,10 +85,9 @@ begin
         rx_mclk => ja_rx_mclk,              --output   
         rx_lrck => ja_rx_lrck,              --output   
         rx_sclk => ja_rx_sclk,              --output   
-        rx_sdin => ja_rx_data               --input    
+        rx_sdin => ja_rx_data               --input   
     );
         
-    
     JB_PMOD_I2S2 : entity work.axis_i2s2
     port map(
         axis_clk => clk_22Mhz,              --input
@@ -98,7 +98,7 @@ begin
         tx_axis_s_ready => tx_ready,        --output
         tx_axis_s_last => tx_last,          --input
         
-        rx_axis_m_data => refMicAmp,           --output
+        rx_axis_m_data => refMicAmp,        --output
         rx_axis_m_valid => rx_valid,        --output
         rx_axis_m_ready => rx_ready,        --input
         rx_axis_m_last => rx_last,          --output
@@ -128,6 +128,7 @@ begin
     ANC_SYSTEM : entity work.ANC_System
     port map(
         clk_100Mhz => clk_100Mhz,
+        clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
         refMic => refMic(23 downto 0),
@@ -135,13 +136,21 @@ begin
         antiNoise => antiNoise(23 downto 0),
         noise => noise(23 downto 0)
     );
-    noiseSpkr <= noise;
-    
+        
     PMOD_CLK : clk_wiz_0
     port map(
         clk_in1 => clk_100Mhz,
         clk_out1 => clk_22Mhz
     );
     
+    DEBUGGER : ila_0
+    PORT MAP(
+        clk     => clk_22Mhz,
+        probe0  => antiNoiseSpkr(23 downto 0),
+        probe1  => errMicAmp(23 downto 0),
+        probe2  => noiseSpkr(23 downto 0),
+        probe3  => refMicAmp(23 downto 0),
+        probe4  => sw0
+    );
 
 end architecture rtl;

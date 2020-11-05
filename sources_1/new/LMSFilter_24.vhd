@@ -48,7 +48,7 @@ ENTITY LMS_Filter_24 IS
         input                             :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         desired                           :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         adapt                             :   IN    std_logic;
-        ce_out                            :   OUT   std_logic;
+--        ce_out                            :   OUT   std_logic;
 --        output                            :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
 --        error_rsvd                        :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         weights                           :   OUT   vector_of_std_logic_vector24(0 TO 11)  -- sfix24_En24 [12]
@@ -457,7 +457,7 @@ BEGIN
     weights(k) <= std_logic_vector(LMS_Filter_24_out3(k));
   END GENERATE;
 
-  ce_out <= clk_enable;
+--  ce_out <= clk_enable;
 
 END rtl;
 

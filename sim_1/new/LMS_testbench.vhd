@@ -107,7 +107,6 @@ begin
         input => LMS_input,
         desired => LMS_desired,
         adapt => adapt,
-        ce_out => LMS_ceout,
         weights => LMS_Coeff
     );
         LMS_input <= noisy_sine;
