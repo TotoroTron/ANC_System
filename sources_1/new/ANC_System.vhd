@@ -32,16 +32,17 @@ entity ANC_System is
         sw0 : in std_logic;
         
         -- signals : fixed point, signed, 24 bit, binary point at 24
-        refMic : in std_logic_vector(23 downto 0);
-        errMic : in std_logic_vector(23 downto 0);
-        antiNoise : out std_logic_vector(23 downto 0);
-        noise : out std_logic_vector(23 downto 0)
+        refMic_in : in std_logic_vector(23 downto 0);
+        errMic_in : in std_logic_vector(23 downto 0);
+        antiNoise_out : out std_logic_vector(23 downto 0);
+        noise_out : out std_logic_vector(23 downto 0)
     );
 end ANC_System;--
 
 architecture rtl of ANC_System is
     signal reset, clk_44Khz, clk_22Khz, clk_41Khz : std_logic := '0';
     signal count_44Khz, count_22Khz, count_41Khz : natural range 0 to 65535;
+    signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal sum1_out : std_logic_vector(23 downto 0);
     signal adapt, enable, trainingMode: std_logic := '0';
     signal Wanc : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
@@ -68,6 +69,25 @@ architecture rtl of ANC_System is
     
     signal count : integer range 0 to 1000000 := 0;
 begin
+    
+    refMic <= refMic_in; errMic <= errMic_in; antiNoise_out <= antiNoise; noise_out <= noise;
+    
+    DEBUGGER : ila_0
+    PORT MAP(
+        clk     => clk_22Mhz,
+        probe0  => Waf(0),
+        probe1  => Waf(1),
+        probe2  => Waf(2),
+        probe3  => Waf(3),
+        probe4  => Waf(4),
+        probe5  => Waf(5),
+        probe6  => Waf(6),
+        probe7  => Waf(7),
+        probe8  => Waf(8),
+        probe9  => Waf(9),
+        probe10 => Waf(10),
+        probe11 => Waf(11)
+    );
     
     CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
     begin

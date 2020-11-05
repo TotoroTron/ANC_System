@@ -25,12 +25,19 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     COMPONENT ILA_0
         PORT(
-            CLK : IN STD_LOGIC;
-            PROBE0 : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE1 : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE2 : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE3 : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE4 : IN STD_LOGIC
+            CLK         : IN STD_LOGIC;
+            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE10     : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE11     : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
         );
     END COMPONENT;
 END top_level_pkg;

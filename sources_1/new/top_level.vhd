@@ -45,11 +45,12 @@ architecture rtl of top_level is
 --    signal antiNoiseSpkrBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
 begin
     resetn <= '1';
+    noiseSpkr <= noise;
     
 --    errMicAmp <= std_logic_vector(shift_left(signed(errMic),3));
 --    refMicAmp <= std_logic_vector(shift_left(signed(refMic),3));
     antiNoiseSpkr <= antiNoise;
-    noiseSpkr <= noise;
+    
     
     errMicAmp <= errMic;    
     refMicAmp <= refMic;
@@ -131,26 +132,16 @@ begin
         clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
-        refMic => refMic(23 downto 0),
-        errMic => errMic(23 downto 0),
-        antiNoise => antiNoise(23 downto 0),
-        noise => noise(23 downto 0)
+        refMic_in => refMic(23 downto 0),
+        errMic_in => errMic(23 downto 0),
+        antiNoise_out => antiNoise(23 downto 0),
+        noise_out => noise(23 downto 0)
     );
         
     PMOD_CLK : clk_wiz_0
     port map(
         clk_in1 => clk_100Mhz,
         clk_out1 => clk_22Mhz
-    );
-    
-    DEBUGGER : ila_0
-    PORT MAP(
-        clk     => clk_22Mhz,
-        probe0  => antiNoiseSpkr(23 downto 0),
-        probe1  => errMicAmp(23 downto 0),
-        probe2  => noiseSpkr(23 downto 0),
-        probe3  => refMicAmp(23 downto 0),
-        probe4  => sw0
     );
 
 end architecture rtl;
