@@ -45,24 +45,24 @@ architecture rtl of top_level is
     
 begin
 
-    DEBUGGER : ila_0
-    port map(
-        clk => clk_22Mhz,
-        probe0 => errMicAmp(23 downto 0),
-        probe1 => refMicAmp(23 downto 0),
-        probe2 => antiNoise(23 downto 0),
-        probe3 => noise(23 downto 0),
-        probe4 => sw0
-    );
+--    DEBUGGER : ila_0
+--    port map(
+--        clk => clk_22Mhz,
+--        probe0 => errMicAmp(23 downto 0),
+--        probe1 => refMicAmp(23 downto 0),
+--        probe2 => antiNoise(23 downto 0),
+--        probe3 => noise(23 downto 0),
+--        probe4 => sw0
+--    );
 
     resetn <= '1';
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4));
---    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 10));
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4)); --amplify error signal by 16
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3));
     
 --    errMicAmp <= errMic;
-    refMicAmp <= refMic;
+--    refMicAmp <= refMic;
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
@@ -74,7 +74,7 @@ begin
         tx_axis_s_ready => ja_tx_ready, --output
         tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => errMicAmp,    --output
+        rx_axis_m_data => errMic,    --output
         rx_axis_m_valid => ja_rx_valid, --output
         rx_axis_m_ready => rx_ready,    --input
         rx_axis_m_last => ja_rx_last,   --output
@@ -100,7 +100,7 @@ begin
         tx_axis_s_ready => tx_ready,    --output
         tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => refMicAmp,    --output
+        rx_axis_m_data => refMic,    --output
         rx_axis_m_valid => rx_valid,    --output
         rx_axis_m_ready => rx_ready,    --input
         rx_axis_m_last => rx_last,      --output
@@ -133,8 +133,8 @@ begin
         clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
-        refMic_in => refMic(23 downto 0),
-        errMic_in => errMic(23 downto 0),
+        refMic_in => refMicAmp(23 downto 0),
+        errMic_in => errMicAmp(23 downto 0),
         antiNoise_out => antiNoise(23 downto 0),
         noise_out => noise(23 downto 0)
     );

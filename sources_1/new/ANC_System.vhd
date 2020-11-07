@@ -78,22 +78,23 @@ begin
         end if;
     end process;
     
---    DEBUGGER : ila_0
---    PORT MAP(
---        clk     => clk_22Mhz,
---        probe0  => Waf(0),
---        probe1  => Waf(1),
---        probe2  => Waf(2),
---        probe3  => Waf(3),
---        probe4  => Waf(4),
---        probe5  => Waf(5),
---        probe6  => Waf(6),
---        probe7  => Waf(7),
---        probe8  => Waf(8),
---        probe9  => Waf(9),
---        probe10 => Waf(10),
---        probe11 => Waf(11)
---    );
+    DEBUGGER : ila_0
+    PORT MAP(
+        clk     => clk_22Mhz,
+        probe0  => Wanc(0),
+        probe1  => Wanc(1),
+        probe2  => Wanc(2),
+        probe3  => Wanc(3),
+        probe4  => Wanc(4),
+        probe5  => Wanc(5),
+        probe6  => Wanc(6),
+        probe7  => Wanc(7),
+        probe8  => Wanc(8),
+        probe9  => Wanc(9),
+        probe10 => Wanc(10),
+        probe11 => Wanc(11),
+        probe12 => enable
+    );
 
 --    ANTINOISE_BUFFER : process(clk_44khz)
 --    begin
