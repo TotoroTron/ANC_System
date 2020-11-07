@@ -30,14 +30,7 @@ PACKAGE top_level_pkg IS
             PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE10     : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE11     : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
+            PROBE4      : IN STD_LOGIC
         );
     END COMPONENT;
 END top_level_pkg;

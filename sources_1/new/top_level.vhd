@@ -42,77 +42,78 @@ architecture rtl of top_level is
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
     signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, resetn : std_logic := '0';
---    signal antiNoiseSpkrBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
+    
 begin
+
+    DEBUGGER : ila_0
+    port map(
+        clk => clk_22Mhz,
+        probe0 => errMicAmp(23 downto 0),
+        probe1 => refMicAmp(23 downto 0),
+        probe2 => antiNoise(23 downto 0),
+        probe3 => noise(23 downto 0),
+        probe4 => sw0
+    );
+
     resetn <= '1';
     noiseSpkr <= noise;
-    
---    errMicAmp <= std_logic_vector(shift_left(signed(errMic),3));
---    refMicAmp <= std_logic_vector(shift_left(signed(refMic),3));
     antiNoiseSpkr <= antiNoise;
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4));
+--    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 10));
     
-    
-    errMicAmp <= errMic;    
+--    errMicAmp <= errMic;
     refMicAmp <= refMic;
---    antiNoiseSpkr(23 downto 0) <= std_logic_vector(antiNoiseSpkrBuffer(81));
---    ANTINOISE_BUFFER : process(clk_44khz)
---    begin
---        if rising_edge(clk_44khz) then
---            antiNoiseSpkrBuffer(0) <= signed(antiNoise(23 downto 0));
---            antiNoiseSpkrBuffer(1 to 81) <= antiNoiseSpkrBuffer(0 to 80);
---        end if;
---    end process;
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
-        axis_clk => clk_22Mhz,              --input
-        axis_resetn => resetn,              --input
+        axis_clk => clk_22Mhz,          --input
+        axis_resetn => resetn,          --input
         
-        tx_axis_s_data => antiNoiseSpkr,    --input
-        tx_axis_s_valid => tx_valid,        --input
-        tx_axis_s_ready => ja_tx_ready,     --output
-        tx_axis_s_last => tx_last,          --input
+        tx_axis_s_data => antiNoiseSpkr,--input
+        tx_axis_s_valid => tx_valid,    --input
+        tx_axis_s_ready => ja_tx_ready, --output
+        tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => errMicAmp,        --output
-        rx_axis_m_valid => ja_rx_valid,     --output
-        rx_axis_m_ready => rx_ready,        --input
-        rx_axis_m_last => ja_rx_last,       --output
+        rx_axis_m_data => errMicAmp,    --output
+        rx_axis_m_valid => ja_rx_valid, --output
+        rx_axis_m_ready => rx_ready,    --input
+        rx_axis_m_last => ja_rx_last,   --output
         
-        tx_mclk => ja_tx_mclk,              --output   
-        tx_lrck => ja_tx_lrck,              --output   
-        tx_sclk => ja_tx_sclk,              --output   
-        tx_sdout => ja_tx_data,             --output   
+        tx_mclk => ja_tx_mclk,          --output
+        tx_lrck => ja_tx_lrck,          --output
+        tx_sclk => ja_tx_sclk,          --output
+        tx_sdout => ja_tx_data,         --output         
         
-        rx_mclk => ja_rx_mclk,              --output   
-        rx_lrck => ja_rx_lrck,              --output   
-        rx_sclk => ja_rx_sclk,              --output   
-        rx_sdin => ja_rx_data               --input   
+        rx_mclk => ja_rx_mclk,          --output
+        rx_lrck => ja_rx_lrck,          --output
+        rx_sclk => ja_rx_sclk,          --output
+        rx_sdin => ja_rx_data           --input
     );
         
     JB_PMOD_I2S2 : entity work.axis_i2s2
     port map(
-        axis_clk => clk_22Mhz,              --input
-        axis_resetn => resetn,              --input
+        axis_clk => clk_22Mhz,          --input
+        axis_resetn => resetn,          --input
         
-        tx_axis_s_data => noiseSpkr,        --input
-        tx_axis_s_valid => tx_valid,        --input
-        tx_axis_s_ready => tx_ready,        --output
-        tx_axis_s_last => tx_last,          --input
+        tx_axis_s_data => noiseSpkr,    --input
+        tx_axis_s_valid => tx_valid,    --input
+        tx_axis_s_ready => tx_ready,    --output
+        tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => refMicAmp,        --output
-        rx_axis_m_valid => rx_valid,        --output
-        rx_axis_m_ready => rx_ready,        --input
-        rx_axis_m_last => rx_last,          --output
+        rx_axis_m_data => refMicAmp,    --output
+        rx_axis_m_valid => rx_valid,    --output
+        rx_axis_m_ready => rx_ready,    --input
+        rx_axis_m_last => rx_last,      --output
         
-        tx_mclk => jb_tx_mclk,              --output   
-        tx_lrck => jb_tx_lrck,              --output   
-        tx_sclk => jb_tx_sclk,              --output   
-        tx_sdout => jb_tx_data,             --output   
+        tx_mclk => jb_tx_mclk,          --output
+        tx_lrck => jb_tx_lrck,          --output
+        tx_sclk => jb_tx_sclk,          --output
+        tx_sdout => jb_tx_data,         --output
         
-        rx_mclk => jb_rx_mclk,              --output   
-        rx_lrck => jb_rx_lrck,              --output   
-        rx_sclk => jb_rx_sclk,              --output   
-        rx_sdin => jb_rx_data               --input    
+        rx_mclk => jb_rx_mclk,          --output
+        rx_lrck => jb_rx_lrck,          --output
+        rx_sclk => jb_rx_sclk,          --output
+        rx_sdin => jb_rx_data           --input
     );
     
     I2S_CONTROLLER : entity work.i2s_controller

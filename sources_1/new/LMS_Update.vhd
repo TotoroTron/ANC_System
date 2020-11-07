@@ -283,21 +283,11 @@ BEGIN
       END IF;
       --         wBuffer(:) = (wBuffer) + 0.5*E*(xBuffer);
     END IF;
-    --     xEnergy = sum(xBuffer .* xBuffer);
-    --    if(Adapt)
-    --         for idx = 1:12
-    --             emu = bitsra(E, 1); %24 bit, 0 fractional
-    --             %xbufdivengy = fi(xBuffer(idx),1 , 64, 32) / xEnergy; %24 bit / 48 bit
-    --             xbufdivengy = fi(xBuffer(idx),1,48,24) / xEnergy;
-    --             w_adj = emu * xbufdivengy;
-    --             wBuffer(idx) = wBuffer(idx) + w_adj;
-    --         end
-    --    end
+
     W_tmp <= wBuffer_temp;
     xBuffer_next <= xBuffer_temp;
     wBuffer_next <= wBuffer_temp;
   END PROCESS LMSUpdate_1_output;
-
 
   outputgen: FOR k IN 0 TO 11 GENERATE
     W(k) <= std_logic_vector(W_tmp(k));

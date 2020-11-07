@@ -68,26 +68,41 @@ architecture rtl of ANC_System is
     signal SINE_en, SINE_ceOut, rand_en : std_logic := '0';
     
     signal count : integer range 0 to 1000000 := 0;
+    signal antiNoiseBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
 begin
     
-    refMic <= refMic_in; errMic <= errMic_in; antiNoise_out <= antiNoise; noise_out <= noise;
+    SIGNAL_BUFFER : process(clk_44Khz)
+    begin
+        if rising_edge(clk_44Khz) then
+            refMic <= refMic_in; errMic <= errMic_in; noise_out <= noise; antiNoise_out <= antiNoise;
+        end if;
+    end process;
     
-    DEBUGGER : ila_0
-    PORT MAP(
-        clk     => clk_22Mhz,
-        probe0  => Waf(0),
-        probe1  => Waf(1),
-        probe2  => Waf(2),
-        probe3  => Waf(3),
-        probe4  => Waf(4),
-        probe5  => Waf(5),
-        probe6  => Waf(6),
-        probe7  => Waf(7),
-        probe8  => Waf(8),
-        probe9  => Waf(9),
-        probe10 => Waf(10),
-        probe11 => Waf(11)
-    );
+--    DEBUGGER : ila_0
+--    PORT MAP(
+--        clk     => clk_22Mhz,
+--        probe0  => Waf(0),
+--        probe1  => Waf(1),
+--        probe2  => Waf(2),
+--        probe3  => Waf(3),
+--        probe4  => Waf(4),
+--        probe5  => Waf(5),
+--        probe6  => Waf(6),
+--        probe7  => Waf(7),
+--        probe8  => Waf(8),
+--        probe9  => Waf(9),
+--        probe10 => Waf(10),
+--        probe11 => Waf(11)
+--    );
+
+--    ANTINOISE_BUFFER : process(clk_44khz)
+--    begin
+--        if rising_edge(clk_44khz) then
+--            antiNoiseBuffer(0) <= signed( antiNoise(23 downto 0) );
+--            antiNoiseBuffer(1 to 81) <= antiNoiseBuffer(0 to 80);
+--        end if;
+--    end process;
+--    antiNoise_out(23 downto 0) <= std_logic_vector(antiNoiseBuffer(81));
     
     CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
     begin
