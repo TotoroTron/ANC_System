@@ -101,7 +101,7 @@ BEGIN
 
   Discrete_FIR_Filter_coeff_0 <= signed(Discrete_FIR_Filter_coeff(0));
 
-  Delay_Pipeline_process : PROCESS (clk, reset)
+  Delay_Pipeline_process : PROCESS (clk)
   BEGIN
     IF clk'EVENT AND clk = '1' THEN
       IF reset = '1' THEN

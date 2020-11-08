@@ -58,8 +58,8 @@ begin
     resetn <= '1';
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4)); --amplify error signal by 16
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3));
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify x8
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3)); --amplify x8
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;

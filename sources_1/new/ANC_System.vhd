@@ -108,7 +108,7 @@ begin
     CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
     begin
         if rising_edge(clk_100Mhz) then
-        if count_44Khz = 1417 then
+        if count_44Khz = 1417 then --COUNT_44KHZ = 1417
             clk_44Khz <= NOT clk_44Khz;
             count_44Khz <= 0;
         else
@@ -117,29 +117,7 @@ begin
         end if;
     end process;
     
-    CLK_GEN_22Khz : process(clk_100Mhz) --22.5Khz
-    begin
-        if rising_edge(clk_100Mhz) then
-        if count_22Khz = 2778 then
-            clk_22Khz <= NOT clk_22Khz;
-            count_22Khz <= 0;
-        else
-            count_22Khz <= count_22Khz + 1;
-        end if;
-        end if;
-    end process;
-    
-    CLK_GEN_41Khz : process(clk_100Mhz) --15Khz
-    begin
-        if rising_edge(clk_100Mhz) then
-        if count_41Khz = 4167 then
-            clk_41Khz <= NOT clk_41Khz;
-            count_41Khz <= 0;
-        else
-            count_41Khz <= count_41Khz + 1;
-        end if;
-        end if;
-    end process;
+
     
     REGISTER_PROCESS : process(clk_44Khz)
     begin
@@ -154,10 +132,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 960001 then
+            if count < 920001 then
                 count <= count + 1; --625, 200000
-                if count > 625 AND count < 960000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 960000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count > 625 AND count < 920000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 920000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -234,6 +212,7 @@ begin
         weights => Waf
     );
         AFE_en <= adapt;
+        
     TRAINING_NOISE : entity work.PRBS
     port map(
         clk => clk_44Khz,
@@ -263,5 +242,29 @@ begin
     );
         SINE_en <= '1';
         sine_sum <= std_logic_vector(signed(sine_out_225Hz) + signed(sine_out_150Hz));
+        
+    CLK_GEN_22Khz : process(clk_100Mhz) --22.5Khz
+    begin
+        if rising_edge(clk_100Mhz) then
+        if count_22Khz = 278 then
+            clk_22Khz <= NOT clk_22Khz;
+            count_22Khz <= 0;
+        else
+            count_22Khz <= count_22Khz + 1;
+        end if;
+        end if;
+    end process;
+    
+    CLK_GEN_41Khz : process(clk_100Mhz) --15Khz
+    begin
+        if rising_edge(clk_100Mhz) then
+        if count_41Khz = 417 then
+            clk_41Khz <= NOT clk_41Khz;
+            count_41Khz <= 0;
+        else
+            count_41Khz <= count_41Khz + 1;
+        end if;
+        end if;
+    end process;
     
 end rtl;

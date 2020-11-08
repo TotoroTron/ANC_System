@@ -200,7 +200,7 @@ BEGIN
 
 -- * LMS: FIR section
 
-  LMS_Filter_24_del_temp_process1 : PROCESS (clk, reset)
+  LMS_Filter_24_del_temp_process1 : PROCESS (clk)
   BEGIN
     IF clk'event AND clk = '1' THEN
       IF reset = '1' THEN
