@@ -8,7 +8,7 @@ entity top_testbench is
 end top_testbench;
 
 architecture Behavioral of top_testbench is
-    signal clk_100Mhz   : std_logic; --100 Mhz
+    signal clk   : std_logic; --100 Mhz
     signal btn0         : std_logic;
     signal sw0          : std_logic;
     signal ja_tx_mclk   :  std_logic;
@@ -32,7 +32,7 @@ begin
 
     UUT: entity work.top_level
     port map(
-        clk_100Mhz  => clk_100Mhz, 
+        clk  => clk, 
         btn0        => btn0, 
         sw0         => sw0,
          
@@ -62,9 +62,9 @@ begin
     
     CLOCK: process
     begin
-        clk_100Mhz <= '0';
+        clk <= '0';
         wait for clk_period/2;
-        clk_100Mhz <= '1';
+        clk <= '1';
         wait for clk_period/2;
     end process;
     

@@ -26,7 +26,7 @@ USE work.top_level_pkg.ALL;
 entity ANC_System is
     port(
         --fpga
-        clk_100Mhz : in std_logic;
+        clk : in std_logic; --125Mhz
         clk_22Mhz : in std_logic;
         btn0 : in std_logic;
         sw0 : in std_logic;
@@ -65,7 +65,7 @@ architecture rtl of ANC_System is
     signal AFE_en : std_logic := '0';
     
     signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0);
-    signal SINE_en, SINE_ceOut, rand_en : std_logic := '0';
+    signal SINE_en, rand_en : std_logic := '0';
     
     signal count : integer range 0 to 1000000 := 0;
     signal antiNoiseBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
@@ -78,23 +78,23 @@ begin
         end if;
     end process;
     
-    DEBUGGER : ila_0
-    PORT MAP(
-        clk     => clk_22Mhz,
-        probe0  => Wanc(0),
-        probe1  => Wanc(1),
-        probe2  => Wanc(2),
-        probe3  => Wanc(3),
-        probe4  => Wanc(4),
-        probe5  => Wanc(5),
-        probe6  => Wanc(6),
-        probe7  => Wanc(7),
-        probe8  => Wanc(8),
-        probe9  => Wanc(9),
-        probe10 => Wanc(10),
-        probe11 => Wanc(11),
-        probe12 => enable
-    );
+--    DEBUGGER : ila_0
+--    PORT MAP(
+--        clk     => clk_22Mhz,
+--        probe0  => Wsp(0),
+--        probe1  => Wsp(1),
+--        probe2  => Wsp(2),
+--        probe3  => Wsp(3),
+--        probe4  => Wsp(4),
+--        probe5  => Wsp(5),
+--        probe6  => Wsp(6),
+--        probe7  => Wsp(7),
+--        probe8  => Wsp(8),
+--        probe9  => Wsp(9),
+--        probe10 => Wsp(10),
+--        probe11 => Wsp(11),
+--        probe12 => enable
+--    );
 
 --    ANTINOISE_BUFFER : process(clk_44khz)
 --    begin
@@ -105,9 +105,9 @@ begin
 --    end process;
 --    antiNoise_out(23 downto 0) <= std_logic_vector(antiNoiseBuffer(81));
     
-    CLK_GEN_44Khz : process(clk_100Mhz) --44.1 Khz
+    CLK_GEN_44Khz : process(clk) --44.1 Khz
     begin
-        if rising_edge(clk_100Mhz) then
+        if rising_edge(clk) then
         if count_44Khz = 1417 then --COUNT_44KHZ = 1417
             clk_44Khz <= NOT clk_44Khz;
             count_44Khz <= 0;
@@ -116,8 +116,6 @@ begin
         end if;
         end if;
     end process;
-    
-
     
     REGISTER_PROCESS : process(clk_44Khz)
     begin
@@ -132,10 +130,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 920001 then
+            if count < 440001 then
                 count <= count + 1; --625, 200000
-                if count > 625 AND count < 920000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 920000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if count > 625 AND count < 440000 then adapt <= '1'; else adapt <= '0'; end if;
+                if count < 440000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -155,6 +153,7 @@ begin
         Discrete_FIR_Filter_out => SP_FilterOut
     );
         SP_en <= '1';
+        
     ANC_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_44Khz,
@@ -165,6 +164,7 @@ begin
         Discrete_FIR_Filter_out => ANC_FilterOut
     );
         ANC_en <= '1';
+        
     ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_44Khz,
@@ -175,6 +175,7 @@ begin
         Discrete_FIR_Filter_out => AF_FilterOut
     );
         AF_en <= '1';
+        
     LMS_UPDATE : entity work.LMSUpdate
     port map(
         clk => clk_44Khz,
@@ -187,7 +188,6 @@ begin
     );
         LMSU_adapt <= (NOT trainingMode) AND enable;
         LMSU_en <= LMSU_adapt;
-        
     
     SECONDARY_PATH_ESTIMATION : entity work.LMS_Filter_24
     port map(
@@ -223,12 +223,11 @@ begin
         rand_en <= '1';
         trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 2));
 
-    SINE_WAVE_225 : entity work.sine_generator(amplitude_20) --225Hz sine output
+    SINE_WAVE_225 : entity work.sine_generator(amplitude_15) --225Hz sine output
     port map(
         clk => clk_22Khz,
         reset => reset,
         clk_enable => SINE_en,
-        ce_out => SINE_ceOut,
         Out1 => sine_out_225Hz
     );
     
@@ -237,15 +236,14 @@ begin
         clk => clk_41Khz,
         reset => reset,
         clk_enable => SINE_en,
-        ce_out => SINE_ceOut,
         Out1 => sine_out_150Hz
     );
         SINE_en <= '1';
         sine_sum <= std_logic_vector(signed(sine_out_225Hz) + signed(sine_out_150Hz));
         
-    CLK_GEN_22Khz : process(clk_100Mhz) --22.5Khz
+    CLK_GEN_22Khz : process(clk) --22.5Khz
     begin
-        if rising_edge(clk_100Mhz) then
+        if rising_edge(clk) then
         if count_22Khz = 278 then
             clk_22Khz <= NOT clk_22Khz;
             count_22Khz <= 0;
@@ -255,9 +253,9 @@ begin
         end if;
     end process;
     
-    CLK_GEN_41Khz : process(clk_100Mhz) --15Khz
+    CLK_GEN_41Khz : process(clk) --15Khz
     begin
-        if rising_edge(clk_100Mhz) then
+        if rising_edge(clk) then
         if count_41Khz = 417 then
             clk_41Khz <= NOT clk_41Khz;
             count_41Khz <= 0;

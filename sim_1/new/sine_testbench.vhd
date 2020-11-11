@@ -60,7 +60,6 @@ begin
         clk => clk,
         reset => reset,
         clk_enable => clk_enable,
-        ce_out => ce_out,
         Out1 => sine_out
     );
 

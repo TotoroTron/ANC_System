@@ -5,7 +5,7 @@ USE work.top_level_pkg.ALL;
 --
 entity top_level is
 	port(
-        clk_100Mhz : in std_logic; --100 Mhz
+        clk : in std_logic; --125 Mhz
         btn0 : in std_logic;
         sw0 : in std_logic;
 		
@@ -45,24 +45,24 @@ architecture rtl of top_level is
     
 begin
 
---    DEBUGGER : ila_0
---    port map(
---        clk => clk_22Mhz,
---        probe0 => errMicAmp(23 downto 0),
---        probe1 => refMicAmp(23 downto 0),
---        probe2 => antiNoise(23 downto 0),
---        probe3 => noise(23 downto 0),
---        probe4 => sw0
---    );
+    DEBUGGER : ila_0
+    port map(
+        clk => clk_22Mhz,
+        probe0 => errMicAmp(23 downto 0),
+        probe1 => refMicAmp(23 downto 0),
+        probe2 => antiNoise(23 downto 0),
+        probe3 => noise(23 downto 0),
+        probe4 => sw0
+    );
 
     resetn <= '1';
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify x8
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3)); --amplify x8
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify x16
+--    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify x4
     
 --    errMicAmp <= errMic;
---    refMicAmp <= refMic;
+    refMicAmp <= refMic;
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
@@ -129,7 +129,7 @@ begin
     
     ANC_SYSTEM : entity work.ANC_System
     port map(
-        clk_100Mhz => clk_100Mhz,
+        clk => clk,
         clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
@@ -141,7 +141,7 @@ begin
         
     PMOD_CLK : clk_wiz_0
     port map(
-        clk_in1 => clk_100Mhz,
+        clk_in1 => clk,
         clk_out1 => clk_22Mhz
     );
 

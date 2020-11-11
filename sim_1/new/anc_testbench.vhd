@@ -63,7 +63,6 @@ begin
         clk => clk_44Khz,
         reset => reset,
         clk_enable => clk_enable,
-        ce_out => ce_out,
         Out1 => sine_out
     );
     
@@ -89,14 +88,14 @@ begin
     
     ANC_SYSTEM : entity work.ANC_System
     port map(
-        clk_44Khz => clk_44Khz,
-        clk_100Khz => clk_100Khz,
+        clk => clk_100Mhz,
+        clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
-        refMic => refMic(23 downto 0),
-        errMic => errMic(23 downto 0),
-        antiNoise => antiNoiseSpkr(23 downto 0),
-        noise => noiseSpkr(23 downto 0)
+        refMic_in => refMic(23 downto 0),
+        errMic_in => errMic(23 downto 0),
+        antiNoise_out => antiNoiseSpkr(23 downto 0),
+        noise_out => noiseSpkr(23 downto 0)
     );
     errMic(23 downto 0) <= rand_out; refMic(23 downto 0) <= sine_out;
     
