@@ -36,33 +36,22 @@ entity top_level is
 end entity top_level;
 
 architecture rtl of top_level is
-    component clk_wiz_0 port(clk_in1 : in std_logic; clk_out1 : out std_logic); end component;
     signal reset : std_logic := '0';
     signal noise, antiNoise, noiseSpkr, antiNoiseSpkr, refMic, errMic, refMicAmp, errMicAmp: std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, resetn : std_logic := '0';
-    
+    signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, resetn : std_logic := '0';
+    signal count : unsigned(8 downto 0);
 begin
-
-    DEBUGGER : ila_0
-    port map(
-        clk => clk_22Mhz,
-        probe0 => errMicAmp(23 downto 0),
-        probe1 => refMicAmp(23 downto 0),
-        probe2 => antiNoise(23 downto 0),
-        probe3 => noise(23 downto 0),
-        probe4 => sw0
-    );
-
+    
     resetn <= '1';
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify x16
---    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify x4
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4)); --amplify 16x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 0)); --amplify 2x
     
 --    errMicAmp <= errMic;
-    refMicAmp <= refMic;
+--    refMicAmp <= refMic;
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
@@ -144,5 +133,6 @@ begin
         clk_in1 => clk,
         clk_out1 => clk_22Mhz
     );
+    
 
 end architecture rtl;

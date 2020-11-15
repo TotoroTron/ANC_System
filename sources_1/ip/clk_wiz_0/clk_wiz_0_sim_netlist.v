@@ -1,7 +1,7 @@
 // Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2020.1 (win64) Build 2902540 Wed May 27 19:54:49 MDT 2020
-// Date        : Mon Nov  9 21:13:20 2020
+// Date        : Fri Nov 13 14:46:47 2020
 // Host        : DESKTOP-2V0TF99 running 64-bit major release  (build 9200)
 // Command     : write_verilog -force -mode funcsim
 //               c:/Vivado_Projects/ANC_System/ANC_System.srcs/sources_1/ip/clk_wiz_0/clk_wiz_0_sim_netlist.v

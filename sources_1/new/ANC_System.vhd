@@ -45,7 +45,7 @@ architecture rtl of ANC_System is
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal sum1_out : std_logic_vector(23 downto 0);
     signal adapt, enable, trainingMode: std_logic := '0';
-    signal Wanc : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
+    signal Wanc : vector_of_std_logic_vector24(0 TO 31);-- := (others => (others => '0'));
     signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     
@@ -67,8 +67,8 @@ architecture rtl of ANC_System is
     signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0);
     signal SINE_en, rand_en : std_logic := '0';
     
-    signal count : integer range 0 to 1000000 := 0;
-    signal antiNoiseBuffer : vector_of_signed24(0 to 81) := (others => (others => '0'));
+    signal stim_count : integer range 0 to 1000000 := 0;
+    signal dbg_count : unsigned(8 downto 0);
 begin
     
     SIGNAL_BUFFER : process(clk_44Khz)
@@ -78,32 +78,67 @@ begin
         end if;
     end process;
     
---    DEBUGGER : ila_0
---    PORT MAP(
---        clk     => clk_22Mhz,
---        probe0  => Wsp(0),
---        probe1  => Wsp(1),
---        probe2  => Wsp(2),
---        probe3  => Wsp(3),
---        probe4  => Wsp(4),
---        probe5  => Wsp(5),
---        probe6  => Wsp(6),
---        probe7  => Wsp(7),
---        probe8  => Wsp(8),
---        probe9  => Wsp(9),
---        probe10 => Wsp(10),
---        probe11 => Wsp(11),
---        probe12 => enable
---    );
-
---    ANTINOISE_BUFFER : process(clk_44khz)
---    begin
---        if rising_edge(clk_44khz) then
---            antiNoiseBuffer(0) <= signed( antiNoise(23 downto 0) );
---            antiNoiseBuffer(1 to 81) <= antiNoiseBuffer(0 to 80);
---        end if;
---    end process;
---    antiNoise_out(23 downto 0) <= std_logic_vector(antiNoiseBuffer(81));
+    DEBUGGER_WANC : ila_0
+    PORT MAP(
+        clk     => dbg_count(8),
+        probe0  => Wanc(0),
+        probe1  => Wanc(1),
+        probe2  => Wanc(2),
+        probe3  => Wanc(3),
+        probe4  => Wanc(4),
+        probe5  => Wanc(5),
+        probe6  => Wanc(6),
+        probe7  => Wanc(7),
+        probe8  => Wanc(8),
+        probe9  => Wanc(9),
+        probe10 => Wanc(10),
+        probe11 => Wanc(11),
+        probe12 => Wanc(12),
+        probe13 => Wanc(13),
+        probe14 => Wanc(14),
+        probe15 => Wanc(15),
+        probe16 => Wanc(16),
+        probe17 => Wanc(17),
+        probe18 => Wanc(18),
+        probe19 => Wanc(19),
+        probe20 => Wanc(20),
+        probe21 => Wanc(21),
+        probe22 => Wanc(22),
+        probe23 => Wanc(23),
+        probe24 => Wanc(24),
+        probe25 => Wanc(25),
+        probe26 => Wanc(26),
+        probe27 => Wanc(27),
+        probe28 => Wanc(28),
+        probe29 => Wanc(29),
+        probe30 => Wanc(30),
+        probe31 => Wanc(31)
+    );
+    
+    DEBUGGER_SIG : ila_1
+    PORT MAP(
+        clk     => dbg_count(8),
+        probe0  => SP_FilterOut,
+        probe1  => AF_FilterOut,
+        probe2  => ANC_FilterOut,
+        probe3  => ANC_FilterOut_Negative,
+        probe4  => errMic,
+        probe5  => refMic,
+        probe6  => noise,
+        probe7  => antiNoise,
+        probe8  => antiNoise,
+        probe9  => sine_sum,
+        probe10 => sine_out_150Hz,
+        probe11 => sine_out_225Hz,
+        probe12 => enable
+    );
+    
+    DEBUG_CLK : process(clk)
+    begin
+        if rising_edge(clk) then
+            dbg_count <= dbg_count + 1;
+        end if;
+    end process;
     
     CLK_GEN_44Khz : process(clk) --44.1 Khz
     begin
@@ -130,10 +165,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if count < 440001 then
-                count <= count + 1; --625, 200000
-                if count > 625 AND count < 440000 then adapt <= '1'; else adapt <= '0'; end if;
-                if count < 440000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+            if stim_count < 440001 then
+                stim_count <= stim_count + 1; --625, 200000
+                if stim_count > 625 AND stim_count < 440000 then adapt <= '1'; else adapt <= '0'; end if;
+                if stim_count < 440000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;
@@ -143,7 +178,7 @@ begin
     sum1_out <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector( -signed(ANC_FilterOut) );
     
-    SECONDARY_PATH_FILTER : entity work.Discrete_FIR_Filter_24
+    SECONDARY_PATH_FILTER : entity work.Discrete_FIR_Filter_24(taps_12)
     port map(
         clk => clk_44Khz,
         reset => reset,
@@ -154,7 +189,7 @@ begin
     );
         SP_en <= '1';
         
-    ANC_FILTER : entity work.Discrete_FIR_Filter_24
+    ANC_FILTER : entity work.Discrete_FIR_Filter_32(taps_32)
     port map(
         clk => clk_44Khz,
         reset => reset,
@@ -165,7 +200,7 @@ begin
     );
         ANC_en <= '1';
         
-    ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_24
+    ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_24(taps_12)
     port map(
         clk => clk_44Khz,
         reset => reset,
@@ -221,7 +256,7 @@ begin
         rand => rand_out
     );
         rand_en <= '1';
-        trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 2));
+        trainingNoise <= rand_out; --std_logic_vector(shift_right(signed(rand_out), 2));
 
     SINE_WAVE_225 : entity work.sine_generator(amplitude_15) --225Hz sine output
     port map(

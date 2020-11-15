@@ -31,7 +31,7 @@ ENTITY Discrete_FIR_Filter_24 IS
 END Discrete_FIR_Filter_24;
 
 
-ARCHITECTURE rtl OF Discrete_FIR_Filter_24 IS
+ARCHITECTURE taps_12 OF Discrete_FIR_Filter_24 IS
 
   -- Signals
   SIGNAL Discrete_FIR_Filter_in_signed    : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
@@ -220,5 +220,4 @@ BEGIN
 
   Discrete_FIR_Filter_out <= std_logic_vector(output_typeconvert);
 
-END rtl;
-
+END taps_12;
