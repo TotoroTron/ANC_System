@@ -48,7 +48,7 @@ BEGIN
 
   E_signed <= signed(E);
 
-    LMSUpdate_1_process : PROCESS (clk, reset)
+    LMSUpdate_1_process : PROCESS (clk)
     BEGIN
         IF clk'EVENT AND clk = '1' THEN
             IF reset = '1' THEN

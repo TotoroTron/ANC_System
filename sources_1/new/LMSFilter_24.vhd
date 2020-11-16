@@ -420,16 +420,16 @@ BEGIN
   add_temp_22 <= resize(add_cast_44, 25) + resize(add_cast_45, 25);
   weight_adder_output(11) <= add_temp_22(23 DOWNTO 0);
 
-  LMS_Filter_24_acc_temp_process2 : PROCESS (clk, reset)
-  BEGIN
-    IF reset = '1' THEN
-      weight <= (OTHERS => (OTHERS => '0'));
-    ELSIF clk'event AND clk = '1' THEN
-      IF enb = '1' AND adapt = '1' THEN
-        weight(0 TO 11) <= weight_adder_output(0 TO 11);
-      END IF;
-    END IF;
-  END PROCESS LMS_Filter_24_acc_temp_process2;
+    LMS_Filter_24_acc_temp_process2 : PROCESS (clk)
+    BEGIN
+        IF clk'event AND clk = '1' THEN
+            IF reset = '1' THEN
+                weight <= (OTHERS => (OTHERS => '0'));
+            ELSIF enb = '1' AND adapt = '1' THEN
+                weight(0 TO 11) <= weight_adder_output(0 TO 11);
+            END IF;
+        END IF;
+    END PROCESS LMS_Filter_24_acc_temp_process2;
 
 -- * LMS_Filter_24 Weight Output Port
 

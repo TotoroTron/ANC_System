@@ -41,14 +41,13 @@ architecture rtl of top_level is
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
     signal clk_22Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, resetn : std_logic := '0';
-    signal count : unsigned(8 downto 0);
 begin
     
     resetn <= '1';
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 4)); --amplify 16x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 0)); --amplify 2x
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify 8x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3)); --amplify 8x
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;
@@ -134,5 +133,4 @@ begin
         clk_out1 => clk_22Mhz
     );
     
-
 end architecture rtl;

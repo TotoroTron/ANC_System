@@ -41,7 +41,8 @@ end ANC_System;--
 
 architecture rtl of ANC_System is
     signal reset, clk_44Khz, clk_22Khz, clk_41Khz : std_logic := '0';
-    signal count_44Khz, count_22Khz, count_41Khz : natural range 0 to 65535;
+    signal count_22Khz, count_41Khz : natural range 0 to 65535 := 0;
+    signal count_44Khz : unsigned(14 downto 0) := (others => '0');
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal sum1_out : std_logic_vector(23 downto 0);
     signal adapt, enable, trainingMode: std_logic := '0';
@@ -68,7 +69,7 @@ architecture rtl of ANC_System is
     signal SINE_en, rand_en : std_logic := '0';
     
     signal stim_count : integer range 0 to 1000000 := 0;
-    signal dbg_count : unsigned(8 downto 0);
+    signal dbg_count : unsigned(9 downto 0) := (others => '0');
 begin
     
     SIGNAL_BUFFER : process(clk_44Khz)
@@ -143,14 +144,10 @@ begin
     CLK_GEN_44Khz : process(clk) --44.1 Khz
     begin
         if rising_edge(clk) then
-        if count_44Khz = 1417 then --COUNT_44KHZ = 1417
-            clk_44Khz <= NOT clk_44Khz;
-            count_44Khz <= 0;
-        else
             count_44Khz <= count_44Khz + 1;
         end if;
-        end if;
     end process;
+    clk_44Khz <= count_44Khz(14);
     
     REGISTER_PROCESS : process(clk_44Khz)
     begin
@@ -165,10 +162,10 @@ begin
     STIMULUS : process(clk_44Khz)
     begin
         if rising_edge(clk_44Khz) then
-            if stim_count < 440001 then
+            if stim_count < 80001 then
                 stim_count <= stim_count + 1; --625, 200000
-                if stim_count > 625 AND stim_count < 440000 then adapt <= '1'; else adapt <= '0'; end if;
-                if stim_count < 440000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+                if stim_count > 625 AND stim_count < 80000 then adapt <= '1'; else adapt <= '0'; end if;
+                if stim_count < 80000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
             end if;
         end if;
     end process;

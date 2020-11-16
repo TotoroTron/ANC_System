@@ -1,11 +1,11 @@
 // Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 // --------------------------------------------------------------------------------
 // Tool Version: Vivado v.2020.1 (win64) Build 2902540 Wed May 27 19:54:49 MDT 2020
-// Date        : Fri Nov 13 17:19:38 2020
+// Date        : Sun Nov 15 12:06:45 2020
 // Host        : DESKTOP-2V0TF99 running 64-bit major release  (build 9200)
-// Command     : write_verilog -force -mode synth_stub -rename_top ila_1 -prefix
-//               ila_1_ ila_0_stub.v
-// Design      : ila_0
+// Command     : write_verilog -force -mode synth_stub
+//               c:/Vivado_Projects/ANC_System/ANC_System.srcs/sources_1/ip/ila_1/ila_1_stub.v
+// Design      : ila_1
 // Purpose     : Stub declaration of top-level module interface
 // Device      : xc7z020clg400-1
 // --------------------------------------------------------------------------------
