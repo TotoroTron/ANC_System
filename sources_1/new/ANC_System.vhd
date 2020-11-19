@@ -27,7 +27,6 @@ entity ANC_System is
     port(
         --fpga
         clk : in std_logic; --125Mhz
-        clk_22Mhz : in std_logic;
         btn0 : in std_logic;
         sw0 : in std_logic;
         
@@ -60,14 +59,13 @@ architecture rtl of ANC_System is
     
     signal AntiNoiseAdapt, AntiNoiseAdaptDelayed : std_logic_vector(23 downto 0);
     
-    signal SPE_en, SPE_ce_out : std_logic := '0';
+    signal SPE_en : std_logic := '0';
     signal AFE_en : std_logic := '0';
     
     signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0);
     signal SINE_en, rand_en : std_logic := '0';
     
     signal stim_count : integer range 0 to 1000000 := 0;
-    signal dbg_count : unsigned(9 downto 0) := (others => '0');
 begin
     
     SIGNAL_ROUTING_BUFFERS : process(clk_10Khz)
@@ -170,7 +168,7 @@ begin
     TRAINING_NOISE : entity work.PRBS
     port map(clk => clk_22Khz, rst => reset, ce => rand_en, rand => rand_out);
     rand_en <= '1';
-    trainingNoise <= rand_out; --std_logic_vector(shift_right(signed(rand_out), 2));
+    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 2)); --divide 4x
 
     SINE_WAVE_225 : entity work.sine_generator(amplitude_15) --225Hz sine output
     port map(clk => clk_22Khz, reset => reset, clk_enable => SINE_en, Out1 => sine_out_225Hz);

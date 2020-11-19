@@ -308,7 +308,7 @@ BEGIN
 
 -- * LMS: FIR section
 
-  LMS_Filter_12_del_temp_process1 : PROCESS (clk)
+  LMS_Filter_24_del_temp_process1 : PROCESS (clk)
   BEGIN
     IF clk'event AND clk = '1' THEN
       IF reset = '1' THEN
@@ -318,7 +318,7 @@ BEGIN
         data_pipeline_tmp(22) <= input_signed;
       END IF;
     END IF;
-  END PROCESS LMS_Filter_12_del_temp_process1;
+  END PROCESS LMS_Filter_24_del_temp_process1;
 
   data_pipeline(0 TO 22) <= data_pipeline_tmp(0 TO 22);
   data_pipeline(23) <= input_signed;

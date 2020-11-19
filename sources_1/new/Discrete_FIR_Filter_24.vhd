@@ -168,7 +168,7 @@ BEGIN
         delay_pipeline_1 <= (OTHERS => to_signed(16#000000#, 24));
       ELSIF enb = '1' THEN
         delay_pipeline_1(0) <= Discrete_FIR_Filter_in_signed;
-        delay_pipeline_1(1 TO 10) <= delay_pipeline_1(0 TO 9);
+        delay_pipeline_1(1 TO 22) <= delay_pipeline_1(0 TO 21);
       END IF;
     END IF;
   END PROCESS Delay_Pipeline_process;
