@@ -46,8 +46,8 @@ begin
     resetn <= NOT btn0;
     noiseSpkr <= noise;
     antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify 8x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3)); --amplify 8x
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 5)); --amplify 32x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 5)); --amplify 32x
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;

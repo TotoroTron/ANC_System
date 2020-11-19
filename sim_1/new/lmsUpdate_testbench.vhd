@@ -48,7 +48,7 @@ begin
         wait for clk_period/2;
     end process;
     
-    SINE : entity work.sine_generator
+    SINE : entity work.sine_generator(amplitude_49)
     port map(
         clk => clk,
         reset => reset,
@@ -63,7 +63,7 @@ begin
         end if;
     end process;
     
-    ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_24
+    ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_12
     port map(
         clk => clk,
         reset => reset,
@@ -85,7 +85,7 @@ begin
             tmp(3) <= "001011001100110011001100";
         ESP_Coeff(5) <= std_logic_vector(-signed(tmp(3)));-- -0.175
     
-    LMS_Update_System : entity work.LMSUPDATE --Unit Under Test
+    LMS_Update_System : entity work.LMS_UPDATE_12 --Unit Under Test
     port map(
         clk => clk,
         reset => reset,
@@ -100,7 +100,7 @@ begin
         LMSU_en <= '1';
         adapt <= '1';
     
-    ANC_FILTER : entity work.Discrete_FIR_Filter_24 --"lms filter copy in matlab"
+    ANC_FILTER : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
     port map(
         clk => clk,
         reset => reset,
@@ -113,7 +113,7 @@ begin
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
         ANC_en <= '1';
         
-    SECONDARY_PATH : entity work.Discrete_FIR_Filter_24
+    SECONDARY_PATH : entity work.Discrete_FIR_Filter_12
     port map(
         clk => clk,
         reset => reset,

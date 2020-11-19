@@ -89,7 +89,6 @@ begin
     ANC_SYSTEM : entity work.ANC_System
     port map(
         clk => clk_100Mhz,
-        clk_22Mhz => clk_22Mhz,
         btn0 => btn0,
         sw0 => sw0,
         refMic_in => refMic(23 downto 0),

@@ -39,8 +39,8 @@ end fir_testbench;
 architecture Behavioral of fir_testbench is
     signal clk, reset, enb, ce_out, clk_enable : std_logic := '0';
     signal fir_in, fir_out, sine_out: std_logic_vector(23 downto 0);
-    signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
-    constant clk_period : time := 10ns;
+    signal Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
+    constant clk_period : time := 8ns;
     signal dummy : std_logic_vector(23 downto 0):= X"200000";
     signal dummy_out : std_logic_vector(23 downto 0);
 begin
@@ -56,11 +56,11 @@ begin
         wait;
     end process;
     
-        Coeff(0) <= X"400000"; --0.25
-        Coeff(1) <= X"C00000"; ---0.25
-        Coeff(2) <= X"200000"; --0.125
-        Coeff(3) <= X"E00000"; ---0.125
-    SINE : entity work.sine_generator
+        Coeff(0) <= X"400000"; -- 0.25
+        Coeff(1) <= X"C00000"; -- -0.25
+        Coeff(2) <= X"200000"; -- 0.125
+        Coeff(3) <= X"E00000"; -- -0.125
+    SINE : entity work.sine_generator(amplitude_49)
     port map(
         clk => clk,
         reset => reset,

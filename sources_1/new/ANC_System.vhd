@@ -44,7 +44,7 @@ architecture rtl of ANC_System is
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
     signal adapt, enable, trainingMode: std_logic := '0';
     signal Wanc : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
-    signal Wsp : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
+    signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     
     signal LMSU_adapt, LMSU_en : std_logic := '0';
@@ -95,7 +95,7 @@ begin
     AF_REF_SUM <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector( -signed(ANC_FilterOut) );
     
-    SECONDARY_PATH_FILTER : entity work.Discrete_FIR_Filter_24
+    SP_FILTER : entity work.Discrete_FIR_Filter_12
     port map(
         clk => clk_10Khz,
         reset => reset,
@@ -117,7 +117,7 @@ begin
     );
         ANC_en <= '1';
         
-    ACOUSTIC_FEEDBACK_FILTER : entity work.Discrete_FIR_Filter_24
+    AF_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_10Khz,
         reset => reset,
@@ -141,7 +141,7 @@ begin
         LMSU_adapt <= (NOT trainingMode) AND enable;
         LMSU_en <= LMSU_adapt;
     
-    SECONDARY_PATH_ESTIMATION : entity work.LMS_Filter_24
+    SP_ESTIMATOR : entity work.LMS_Filter_12
     port map(
         clk => clk_10Khz,
         reset => reset,
@@ -153,7 +153,7 @@ begin
     );
         SPE_en <= adapt;
     
-    ACOUSTIC_FEEDBACK_ESTIMATION : entity work.LMS_Filter_24
+    AF_ESTIMATOR : entity work.LMS_Filter_24
     port map(
         clk => clk_10Khz,
         reset => reset,
