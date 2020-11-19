@@ -128,9 +128,6 @@ begin
     );
         
     PMOD_CLK : clk_wiz_0
-    port map(
-        clk_in1 => clk,
-        clk_out1 => clk_22Mhz
-    );
+    port map(clk_in1 => clk, clk_out1 => clk_22Mhz);
     
 end architecture rtl;
