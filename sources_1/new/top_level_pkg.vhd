@@ -50,7 +50,53 @@ PACKAGE top_level_pkg IS
             PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
+            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE10     : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE11     : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
+        );
+    END COMPONENT;
+    COMPONENT ILA_2
+        PORT(
+            CLK         : IN STD_LOGIC;
+            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE10      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE11      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE12      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE13      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE14      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE15      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE16      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE17      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE18      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE19      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE20      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE21      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE22      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);                                                                                    
+            PROBE23      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)            
+        );
+    END COMPONENT;
+    COMPONENT ILA_3
+        PORT(
+            CLK         : IN STD_LOGIC;
+            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)       
         );
     END COMPONENT;
     component clk_wiz_0

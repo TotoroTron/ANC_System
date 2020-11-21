@@ -27,10 +27,11 @@ entity ANC_System is
     port(
         --fpga
         clk : in std_logic; --125Mhz
-        btn0 : in std_logic;
-        sw0 : in std_logic;
+        clk_anc : in std_logic; --10Khz
+        reset : in std_logic;
+        enable : in std_logic;
         
-        -- signals : fixed point, signed, 24 bit, binary point at 24
+        -- signals : fixed point, signed, 24 bit, 24 precision bits
         refMic_in : in std_logic_vector(23 downto 0);
         errMic_in : in std_logic_vector(23 downto 0);
         antiNoise_out : out std_logic_vector(23 downto 0);
@@ -39,10 +40,10 @@ entity ANC_System is
 end ANC_System;--
 
 architecture rtl of ANC_System is
-    signal reset, clk_10Khz, clk_22Khz, clk_41Khz, clk_ila : std_logic := '0';
+    signal clk_22Khz, clk_41Khz, clk_ila : std_logic := '0';
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
-    signal adapt, enable, trainingMode: std_logic := '0';
+    signal adapt, trainingMode: std_logic := '0';
     signal Wanc : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
@@ -68,9 +69,9 @@ architecture rtl of ANC_System is
     signal stim_count : integer range 0 to 1000000 := 0;
 begin
     
-    SIGNAL_ROUTING_BUFFERS : process(clk_10Khz)
+    SIGNAL_ROUTING_BUFFERS : process(clk_anc)
     begin
-        if rising_edge(clk_10Khz) then
+        if rising_edge(clk_anc) then
             refMic <= refMic_in; errMic <= errMic_in; noise_out <= noise; antiNoise_out <= antiNoise;
             AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
             if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
@@ -79,9 +80,9 @@ begin
         end if;
     end process;
    
-    TRAINING_ADAPT_SEQUENCING : process(clk_10Khz)
+    TRAINING_ADAPT_SEQUENCING : process(clk_anc)
     begin
-        if rising_edge(clk_10Khz) then
+        if rising_edge(clk_anc) then
             if stim_count < 100001 then
                 stim_count <= stim_count + 1; --625, 200000
                 if stim_count > 625 AND stim_count < 100000 then adapt <= '1'; else adapt <= '0'; end if;
@@ -90,14 +91,34 @@ begin
         end if;
     end process;
     
-    enable <= sw0;
-    reset <= btn0;
+--    ANC_CONTROLLER : process(clk_anc)
+--    begin
+--        if rising_edge(clk_anc) then
+--            ENTITY_SIGNAL_BUFFERS :
+--                refMic <= refMic_in; errMic <= errMic_in; noise_out <= noise; antiNoise_out <= antiNoise;
+--            ANTINOISE_BUFFER :
+--                AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
+--            TRAIN_ADAPT_SEQUENCE : 
+--                if reset = '1' then
+--                    stim_count <= 0;
+--                elsif stim_count < 100001 then
+--                    stim_count <= stim_count + 1; --625, 200000
+--                    if stim_count > 625 AND stim_count < 100000 then adapt <= '1'; else adapt <= '0'; end if;
+--                    if stim_count < 100000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
+--                end if;
+--           SIGNAL_ROUTING :
+--                if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
+--                if trainingMode = '1' then antiNoise <= trainingNoise; else antiNoise <= antiNoiseAdapt; end if;
+--                if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_sum; end if; 
+--        end if;
+--    end process;
+    
     AF_REF_SUM <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector( -signed(ANC_FilterOut) );
     
     SP_FILTER : entity work.Discrete_FIR_Filter_12
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         enb => SP_en,
         Discrete_FIR_Filter_in => AF_REF_SUM,
@@ -108,7 +129,7 @@ begin
         
     ANC_FILTER : entity work.Discrete_FIR_Filter_12
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         enb => ANC_en,
         Discrete_FIR_Filter_in => AF_REF_SUM,
@@ -119,7 +140,7 @@ begin
         
     AF_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         enb => AF_en,
         Discrete_FIR_Filter_in => antiNoiseAdaptDelayed,
@@ -130,7 +151,7 @@ begin
         
     LMS_UPDATE : entity work.LMS_Update_12
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         enb => LMSU_en,
         X => SP_FilterOut,
@@ -143,7 +164,7 @@ begin
     
     SP_ESTIMATOR : entity work.LMS_Filter_12
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         clk_enable => SPE_en,
         input => trainingNoise,
@@ -155,7 +176,7 @@ begin
     
     AF_ESTIMATOR : entity work.LMS_Filter_24
     port map(
-        clk => clk_10Khz,
+        clk => clk_anc,
         reset => reset,
         clk_enable => AFE_en,
         input => trainingNoise,
@@ -183,8 +204,8 @@ begin
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
-    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
-    generic map(count => 12500) port map(clk_in => clk, clk_out => clk_10Khz);
+--    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
+--    generic map(count => 12500) port map(clk_in => clk, clk_out => clk_10Khz);
     
     DEBUGGER_WANC : ila_0
     PORT MAP(
@@ -203,7 +224,52 @@ begin
         probe11 => Wanc(11)
     );
     
-    DEBUGGER_SIGNALS : ila_1
+    DEBUGGER_WSP : ila_1
+    PORT MAP(
+        clk     => clk_ila,
+        probe0  => Wsp(0),
+        probe1  => Wsp(1),
+        probe2  => Wsp(2),
+        probe3  => Wsp(3),
+        probe4  => Wsp(4),
+        probe5  => Wsp(5),
+        probe6  => Wsp(6),
+        probe7  => Wsp(7),
+        probe8  => Wsp(8),
+        probe9  => Wsp(9),
+        probe10 => Wsp(10),
+        probe11 => Wsp(11)
+    );
+    
+    DEBUGGER_WAF : ila_2
+    PORT MAP(
+        CLK => clk_ila,
+        PROBE0  => Waf(0),
+        PROBE1  => Waf(1),
+        PROBE2  => Waf(2),
+        PROBE3  => Waf(3),
+        PROBE4  => Waf(4),
+        PROBE5  => Waf(5),
+        PROBE6  => Waf(6),
+        PROBE7  => Waf(7),
+        PROBE8  => Waf(8),
+        PROBE9  => Waf(9),
+        PROBE10 => Waf(10),
+        PROBE11 => Waf(11),
+        PROBE12 => Waf(12),
+        PROBE13 => Waf(13),
+        PROBE14 => Waf(14),
+        PROBE15 => Waf(15),
+        PROBE16 => Waf(16),
+        PROBE17 => Waf(17),
+        PROBE18 => Waf(18),
+        PROBE19 => Waf(19),
+        PROBE20 => Waf(20),
+        PROBE21 => Waf(21),
+        PROBE22 => Waf(22),
+        PROBE23 => Waf(23)
+    );
+    DEBUGGER_SIGNALS : ila_3
     PORT MAP(
         clk     => clk_ila,
         probe0  => refMic,

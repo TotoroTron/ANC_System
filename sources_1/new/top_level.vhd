@@ -6,8 +6,8 @@ USE work.top_level_pkg.ALL;
 entity top_level is
 	port(
         clk : in std_logic; --125 Mhz
-        btn0 : in std_logic; --reset
-        sw0 : in std_logic; --ANC adapt enable
+        reset : in std_logic; --reset
+        enable : in std_logic; --ANC adapt enable
 		
 		--JA line out
 		ja_tx_mclk : out std_logic;
@@ -36,39 +36,41 @@ entity top_level is
 end entity top_level;
 
 architecture rtl of top_level is
-    signal reset : std_logic := '0';
-    signal noise, antiNoise, noiseSpkr, antiNoiseSpkr, refMic, errMic, refMicAmp, errMicAmp: std_logic_vector(31 downto 0);
+    signal noise, antiNoise, noiseAmp, antiNoiseAmp : std_logic_vector(31 downto 0);
+    signal refMic, errMic, refMicAmp, errMicAmp : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, resetn : std_logic := '0';
+    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, resetn : std_logic;
 begin
     
-    resetn <= NOT btn0;
-    noiseSpkr <= noise;
-    antiNoiseSpkr <= antiNoise;
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 5)); --amplify 32x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 5)); --amplify 32x
+    resetn <= NOT reset;
+--    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
+--    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 2)); --amplify 4x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 2)); --amplify 4x
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;
+    noiseAmp <= noise;
+    antiNoiseAmp <= antiNoise;
     
     JA_PMOD_I2S2 : entity work.axis_i2s2
     port map(
-        axis_clk => clk_5Mhz,          --input
+        axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
         
-        tx_axis_s_data => antiNoiseSpkr,--input
+        tx_axis_s_data => antiNoiseAmp, --input
         tx_axis_s_valid => tx_valid,    --input
         tx_axis_s_ready => ja_tx_ready, --output
         tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => errMic,    --output
+        rx_axis_m_data => errMic,       --output
         rx_axis_m_valid => ja_rx_valid, --output
         rx_axis_m_ready => rx_ready,    --input
         rx_axis_m_last => ja_rx_last,   --output
         
         tx_mclk => ja_tx_mclk,          --output
-        tx_lrck => ja_tx_lrck,          --output
+        tx_lrck => clk_anc,          --output to ANC_SYSTEM 10Khz clk
         tx_sclk => ja_tx_sclk,          --output
         tx_sdout => ja_tx_data,         --output         
         
@@ -77,18 +79,19 @@ begin
         rx_sclk => ja_rx_sclk,          --output
         rx_sdin => ja_rx_data           --input
     );
+        ja_tx_lrck <= clk_anc; --branch-out
         
     JB_PMOD_I2S2 : entity work.axis_i2s2
     port map(
-        axis_clk => clk_5Mhz,          --input
+        axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
         
-        tx_axis_s_data => noiseSpkr,    --input
+        tx_axis_s_data => noiseAmp,     --input
         tx_axis_s_valid => tx_valid,    --input
         tx_axis_s_ready => tx_ready,    --output
         tx_axis_s_last => tx_last,      --input
         
-        rx_axis_m_data => refMic,    --output
+        rx_axis_m_data => refMic,       --output
         rx_axis_m_valid => rx_valid,    --output
         rx_axis_m_ready => rx_ready,    --input
         rx_axis_m_last => rx_last,      --output
@@ -118,8 +121,9 @@ begin
     ANC_SYSTEM : entity work.ANC_System
     port map(
         clk => clk,
-        btn0 => btn0, --reset
-        sw0 => sw0, --ANC adapt enable
+        clk_anc => clk_anc, --10Khz
+        reset => reset, --reset
+        enable => enable, --ANC adapt enable
         refMic_in => refMicAmp(23 downto 0),
         errMic_in => errMicAmp(23 downto 0),
         antiNoise_out => antiNoise(23 downto 0),
