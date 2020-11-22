@@ -44,7 +44,7 @@ architecture rtl of ANC_System is
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
     signal adapt, trainingMode: std_logic := '0';
-    signal Wanc : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
+    signal Wanc : vector_of_std_logic_vector24(0 TO 15);-- := (others => (others => '0'));
     signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     
@@ -127,7 +127,7 @@ begin
     );
         SP_en <= '1';
         
-    ANC_FILTER : entity work.Discrete_FIR_Filter_12
+    ANC_FILTER : entity work.Discrete_FIR_Filter_16
     port map(
         clk => clk_anc,
         reset => reset,
@@ -149,7 +149,7 @@ begin
     );
         AF_en <= '1';
         
-    LMS_UPDATE : entity work.LMS_Update_12
+    LMS_UPDATE : entity work.LMS_Update_16
     port map(
         clk => clk_anc,
         reset => reset,
