@@ -9,8 +9,8 @@ end top_testbench;
 
 architecture Behavioral of top_testbench is
     signal clk   : std_logic; --100 Mhz
-    signal btn0         : std_logic;
-    signal sw0          : std_logic;
+    signal reset         : std_logic;
+    signal enable          : std_logic;
     signal ja_tx_mclk   :  std_logic;
     signal ja_tx_lrck   :  std_logic;
     signal ja_tx_sclk   :  std_logic;
@@ -33,8 +33,8 @@ begin
     UUT: entity work.top_level
     port map(
         clk  => clk, 
-        btn0        => btn0, 
-        sw0         => sw0,
+        reset        => reset, 
+        enable         => enable,
          
 		ja_tx_mclk  => ja_tx_mclk,    
 		ja_tx_lrck  => ja_tx_lrck,    
@@ -43,7 +43,7 @@ begin
 		ja_rx_mclk  => ja_rx_mclk,    
 		ja_rx_lrck  => ja_rx_lrck,    
 		ja_rx_sclk  => ja_rx_sclk,    
-		ja_rx_data  => ja_rx_data, --in
+		ja_rx_data  => ja_rx_data, 
 		    
         jb_tx_mclk  => jb_tx_mclk,
         jb_tx_lrck  => jb_tx_lrck,
@@ -52,13 +52,13 @@ begin
         jb_rx_mclk  => jb_rx_mclk,
         jb_rx_lrck  => jb_rx_lrck,
         jb_rx_sclk  => jb_rx_sclk,
-        jb_rx_data  => jb_rx_data --in
+        jb_rx_data  => jb_rx_data 
     );
     
     ja_rx_data <= '1';
     jb_rx_data <= '1';
-    btn0 <= '0';
-    sw0 <= '1';
+    reset <= '0';
+    enable <= '1';
     
     CLOCK: process
     begin

@@ -44,7 +44,7 @@ architecture rtl of ANC_System is
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
     signal adapt, trainingMode: std_logic := '0';
-    signal Wanc : vector_of_std_logic_vector24(0 TO 15);-- := (others => (others => '0'));
+    signal Wanc : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     
@@ -127,7 +127,7 @@ begin
     );
         SP_en <= '1';
         
-    ANC_FILTER : entity work.Discrete_FIR_Filter_16
+    ANC_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_anc,
         reset => reset,
@@ -149,7 +149,7 @@ begin
     );
         AF_en <= '1';
         
-    LMS_UPDATE : entity work.LMS_Update_16
+    LMS_UPDATE : entity work.LMS_Update_24
     port map(
         clk => clk_anc,
         reset => reset,
@@ -203,81 +203,83 @@ begin
     CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
-    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
+    generic map(count => 37) port map(clk_in => clk_anc, clk_out => clk_ila);
+--    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
+--    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
 --    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
 --    generic map(count => 12500) port map(clk_in => clk, clk_out => clk_10Khz);
     
-    DEBUGGER_WANC : ila_0
-    PORT MAP(
-        clk     => clk_ila,
-        probe0  => Wanc(0),
-        probe1  => Wanc(1),
-        probe2  => Wanc(2),
-        probe3  => Wanc(3),
-        probe4  => Wanc(4),
-        probe5  => Wanc(5),
-        probe6  => Wanc(6),
-        probe7  => Wanc(7),
-        probe8  => Wanc(8),
-        probe9  => Wanc(9),
-        probe10 => Wanc(10),
-        probe11 => Wanc(11)
-    );
+--    DEBUGGER_WANC : ila_0
+--    PORT MAP(
+--        clk     => clk_ila,
+--        probe0  => Wanc(0),
+--        probe1  => Wanc(1),
+--        probe2  => Wanc(2),
+--        probe3  => Wanc(3),
+--        probe4  => Wanc(4),
+--        probe5  => Wanc(5),
+--        probe6  => Wanc(6),
+--        probe7  => Wanc(7),
+--        probe8  => Wanc(8),
+--        probe9  => Wanc(9),
+--        probe10 => Wanc(10),
+--        probe11 => Wanc(11)
+--    );
     
-    DEBUGGER_WSP : ila_1
-    PORT MAP(
-        clk     => clk_ila,
-        probe0  => Wsp(0),
-        probe1  => Wsp(1),
-        probe2  => Wsp(2),
-        probe3  => Wsp(3),
-        probe4  => Wsp(4),
-        probe5  => Wsp(5),
-        probe6  => Wsp(6),
-        probe7  => Wsp(7),
-        probe8  => Wsp(8),
-        probe9  => Wsp(9),
-        probe10 => Wsp(10),
-        probe11 => Wsp(11)
-    );
+--    DEBUGGER_WSP : ila_1
+--    PORT MAP(
+--        clk     => clk_ila,
+--        probe0  => Wsp(0),
+--        probe1  => Wsp(1),
+--        probe2  => Wsp(2),
+--        probe3  => Wsp(3),
+--        probe4  => Wsp(4),
+--        probe5  => Wsp(5),
+--        probe6  => Wsp(6),
+--        probe7  => Wsp(7),
+--        probe8  => Wsp(8),
+--        probe9  => Wsp(9),
+--        probe10 => Wsp(10),
+--        probe11 => Wsp(11)
+--    );
     
-    DEBUGGER_WAF : ila_2
-    PORT MAP(
-        CLK => clk_ila,
-        PROBE0  => Waf(0),
-        PROBE1  => Waf(1),
-        PROBE2  => Waf(2),
-        PROBE3  => Waf(3),
-        PROBE4  => Waf(4),
-        PROBE5  => Waf(5),
-        PROBE6  => Waf(6),
-        PROBE7  => Waf(7),
-        PROBE8  => Waf(8),
-        PROBE9  => Waf(9),
-        PROBE10 => Waf(10),
-        PROBE11 => Waf(11),
-        PROBE12 => Waf(12),
-        PROBE13 => Waf(13),
-        PROBE14 => Waf(14),
-        PROBE15 => Waf(15),
-        PROBE16 => Waf(16),
-        PROBE17 => Waf(17),
-        PROBE18 => Waf(18),
-        PROBE19 => Waf(19),
-        PROBE20 => Waf(20),
-        PROBE21 => Waf(21),
-        PROBE22 => Waf(22),
-        PROBE23 => Waf(23)
-    );
-    DEBUGGER_SIGNALS : ila_3
-    PORT MAP(
-        clk     => clk_ila,
-        probe0  => refMic,
-        probe1  => errMic,
-        probe2  => noise,
-        probe3  => antiNoise,
-        probe4  => SP_FilterOut,
-        probe5  => AF_FilterOut,
-        probe6  => ANC_FilterOut
-    );
+--    DEBUGGER_WAF : ila_2
+--    PORT MAP(
+--        CLK => clk_ila,
+--        PROBE0  => Wanc(0),
+--        PROBE1  => Wanc(1),
+--        PROBE2  => Wanc(2),
+--        PROBE3  => Wanc(3),
+--        PROBE4  => Wanc(4),
+--        PROBE5  => Wanc(5),
+--        PROBE6  => Wanc(6),
+--        PROBE7  => Wanc(7),
+--        PROBE8  => Wanc(8),
+--        PROBE9  => Wanc(9),
+--        PROBE10 => Wanc(10),
+--        PROBE11 => Wanc(11),
+--        PROBE12 => Wanc(12),
+--        PROBE13 => Wanc(13),
+--        PROBE14 => Wanc(14),
+--        PROBE15 => Wanc(15),
+--        PROBE16 => Wanc(16),
+--        PROBE17 => Wanc(17),
+--        PROBE18 => Wanc(18),
+--        PROBE19 => Wanc(19),
+--        PROBE20 => Wanc(20),
+--        PROBE21 => Wanc(21),
+--        PROBE22 => Wanc(22),
+--        PROBE23 => Wanc(23)
+--    );
+--    DEBUGGER_SIGNALS : ila_3
+--    PORT MAP(
+--        clk     => clk_ila,
+--        probe0  => refMic,
+--        probe1  => errMic,
+--        probe2  => noise,
+--        probe3  => antiNoise,
+--        probe4  => SP_FilterOut,
+--        probe5  => AF_FilterOut,
+--        probe6  => ANC_FilterOut
+--    );
 end rtl;

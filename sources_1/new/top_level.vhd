@@ -46,8 +46,8 @@ begin
     resetn <= NOT reset;
 --    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
 --    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 3)); --amplify 8x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 3)); --amplify 8x
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 1)); --amplify 2x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify 2x
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;
@@ -129,7 +129,7 @@ begin
         antiNoise_out => antiNoise(23 downto 0),
         noise_out => noise(23 downto 0)
     );
-        
+    
     PMOD_CLK : clk_wiz_0
     port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
     

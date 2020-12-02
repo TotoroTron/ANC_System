@@ -10,9 +10,10 @@ entity lmsUpdate_testbench is
 end lmsUpdate_testbench;
 --
 architecture Behavioral of lmsUpdate_testbench is
-    signal clk, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
-    signal sine_out : std_logic_vector(23 downto 0);
-    constant clk_period : time := 22670ns;
+    signal clk, clk_anc, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
+    signal sine_out : std_logic_vector(23 downto 0) := (others => '0');
+    constant t1 : time := 400ns;
+    constant t2 : time := 10ns;
         
     signal LMSU_input, LMSU_error: std_logic_vector(23 downto 0) := (others => '0');
     signal LMSU_en : std_logic := '0';
@@ -26,46 +27,55 @@ architecture Behavioral of lmsUpdate_testbench is
     signal SP_en : std_logic := '0';
     
     signal ANC_FilterIn, ANC_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
-    signal Wanc, Wanc_delayed : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
+    signal Wanc, Wanc_d1, Wanc_d2 : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal ANC_en : std_logic := '0';
     
     signal PRI_FilterIn, PRI_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
     signal PRI_coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal PRI_en : std_logic := '0';
     
-    signal tmp : vector_of_std_logic_vector24(0 to 15);
-    signal summation : std_logic_vector(23 downto 0);
-    signal ANC_FilterOut_inv : std_logic_vector(23 downto 0);
+    signal tmp : vector_of_std_logic_vector24(0 to 15) := (others => (others => '0'));
+    signal summation : std_logic_vector(23 downto 0) := (others => '0');
+    signal ANC_FilterOut_inv : std_logic_vector(23 downto 0) := (others => '0');
 begin
 
     reset <= '0'; clk_enable <= '1';
     
-    CLOCK: process
+    CLOCK_ANC : process
     begin
-        clk <= '0';
-        wait for clk_period/2;
-        clk <= '1';
-        wait for clk_period/2;
+        clk_anc <= '0';
+        wait for t1/2;
+        clk_anc <= '1';
+        wait for t1/2;
     end process;
     
-    SINE : entity work.sine_generator(amplitude_49)
+    CLOCK_SYS : process
+    begin
+        clk <= '0';
+        wait for t2/2;
+        clk <= '1';
+        wait for t2/2;
+    end process;
+    
+    SINE : entity work.sine_generator(amplitude_15)
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         clk_enable => clk_enable,
         Out1 => sine_out
     );
     
-    DELAY_REGISTER : process(clk)
+    DELAY_REGISTER : process(clk_anc)
     begin
-        if rising_edge(clk) then
-            Wanc_delayed <= Wanc;
+        if rising_edge(clk_anc) then
+            Wanc_d1 <= Wanc;
+--            Wanc_d2 <= Wanc_d1;
         end if;
     end process;
     
     ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_12
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         enb => ESP_en,
         Discrete_FIR_Filter_in => ESP_FilterIn,
@@ -85,8 +95,9 @@ begin
             tmp(3) <= "001011001100110011001100";
         ESP_Coeff(5) <= std_logic_vector(-signed(tmp(3)));-- -0.175
     
-    LMS_Update_System : entity work.LMS_UPDATE_12 --Unit Under Test
+    LMS_Update_System : entity work.LMS_UPDATE --Unit Under Test
     port map(
+        clk_anc => clk_anc,
         clk => clk,
         reset => reset,
         enb => LMSU_en,
@@ -102,11 +113,11 @@ begin
     
     ANC_FILTER : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         enb => ANC_en,
         Discrete_FIR_Filter_in => ANC_FilterIn,
-        Discrete_FIR_Filter_coeff => Wanc_delayed,
+        Discrete_FIR_Filter_coeff => Wanc_d1,
         Discrete_FIR_Filter_out => ANC_FilterOut
     );
         ANC_FilterIn <= sine_out;
@@ -115,7 +126,7 @@ begin
         
     SECONDARY_PATH : entity work.Discrete_FIR_Filter_12
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         enb => SP_en,
         Discrete_FIR_Filter_in => SP_FilterIn,
@@ -133,9 +144,9 @@ begin
         SP_Coeff(4) <= std_logic_vector(-signed(tmp(7))); -- -0.2
         SP_Coeff(5) <= std_logic_vector(-signed(tmp(7))); -- -0.2    
         --
-    PRIMARY_PATH : entity work.Discrete_FIR_Filter_24 --"lms filter copy in matlab"
+    PRIMARY_PATH : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         enb => PRI_en,
         Discrete_FIR_Filter_in => PRI_FilterIn,

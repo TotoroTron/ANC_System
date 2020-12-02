@@ -31,17 +31,16 @@ ENTITY LMS_Update_12 IS
         );
 END LMS_Update_12;
 
-
 ARCHITECTURE rtl OF LMS_Update_12 IS
 
   -- Signals
-  SIGNAL X_signed                         : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL E_signed                         : signed(23 DOWNTO 0);  -- sfix24_En24
-  SIGNAL W_tmp                            : vector_of_signed24(0 TO 11);  -- sfix24_En24 [12]
-  SIGNAL xBuffer                          : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL wBuffer                          : vector_of_signed24(0 TO 11);  -- sfix24 [12]
-  SIGNAL xBuffer_next                     : vector_of_signed24(0 TO 11);  -- sfix24_En24 [12]
-  SIGNAL wBuffer_next                     : vector_of_signed24(0 TO 11);  -- sfix24_En24 [12]
+  SIGNAL X_signed                         : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL E_signed                         : signed(23 DOWNTO 0) := (others => '0');  -- sfix24_En24
+  SIGNAL W_tmp                            : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24_En24 [12]
+  SIGNAL xBuffer                          : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL wBuffer                          : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24 [12]
+  SIGNAL xBuffer_next                     : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24_En24 [12]
+  SIGNAL wBuffer_next                     : vector_of_signed24(0 TO 11) := (others => (others => '0'));  -- sfix24_En24 [12]
 
 BEGIN
   X_signed <= signed(X);
@@ -273,4 +272,5 @@ BEGIN
   END GENERATE;
 
 END rtl;
+
 
