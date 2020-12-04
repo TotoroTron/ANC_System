@@ -10,7 +10,7 @@ entity lmsUpdate_testbench is
 end lmsUpdate_testbench;
 --
 architecture Behavioral of lmsUpdate_testbench is
-    signal clk, clk_anc, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
+    signal clk_dsp, clk_anc, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
     signal sine_out : std_logic_vector(23 downto 0) := (others => '0');
     constant t1 : time := 400ns;
     constant t2 : time := 10ns;
@@ -51,9 +51,9 @@ begin
     
     CLOCK_SYS : process
     begin
-        clk <= '0';
+        clk_dsp <= '0';
         wait for t2/2;
-        clk <= '1';
+        clk_dsp <= '1';
         wait for t2/2;
     end process;
     
@@ -97,7 +97,7 @@ begin
     LMS_Update_System : entity work.LMS_UPDATE --Unit Under Test
     port map(
         clk_anc => clk_anc,
-        clk_dsp => clk,
+        clk_dsp => clk_dsp,
 --        clk => clk_anc,
         reset => reset,
         enb => LMSU_en,
@@ -111,14 +111,24 @@ begin
         LMSU_en <= '1';
         adapt <= '1';
     
-    ANC_FILTER : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
+--    ANC_FILTER : entity work.Discrete_FIR_Filter_12
+--    port map(
+--        clk => clk_anc,
+--        reset => reset,
+--        enb => ANC_en,
+--        Discrete_FIR_Filter_in => ANC_FilterIn,
+--        Discrete_FIR_Filter_coeff => Wanc_d1,
+--        Discrete_FIR_Filter_out => ANC_FilterOut
+--    );
+    ANC_FILTER : entity work.Discrete_FIR_Filter
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => ANC_en,
-        Discrete_FIR_Filter_in => ANC_FilterIn,
-        Discrete_FIR_Filter_coeff => Wanc_d1,
-        Discrete_FIR_Filter_out => ANC_FilterOut
+        input => ANC_FilterIn,
+        coeff => Wanc_d1,
+        output => ANC_FilterOut
     );
         ANC_FilterIn <= sine_out;
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));

@@ -46,8 +46,8 @@ begin
     resetn <= NOT reset;
 --    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
 --    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 1)); --amplify 2x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify 2x
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 2)); --amplify 4x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 2)); --amplify 4x
     
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;
@@ -71,6 +71,7 @@ begin
         
         tx_mclk => ja_tx_mclk,          --output
         tx_lrck => clk_anc,          --output to ANC_SYSTEM 10Khz clk
+        --this is spaghetti code, find a more intuitive way to generate clk_anc
         tx_sclk => ja_tx_sclk,          --output
         tx_sdout => ja_tx_data,         --output         
         

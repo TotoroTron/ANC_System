@@ -86,5 +86,5 @@ begin
         Discrete_FIR_Filter_out => fir_out
     );
     fir_in <= sine_out;
-
+    --
 end Behavioral;

@@ -44,8 +44,8 @@ architecture rtl of ANC_System is
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
     signal adapt, trainingMode: std_logic := '0';
-    signal Wanc : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
-    signal Wsp : vector_of_std_logic_vector24(0 TO 11);-- := (others => (others => '0'));
+    signal Wanc : vector_of_std_logic_vector24(0 TO 47);-- := (others => (others => '0'));
+    signal Wsp : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
     
     signal LMSU_adapt, LMSU_en : std_logic := '0';
@@ -116,41 +116,47 @@ begin
     AF_REF_SUM <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
     ANC_FilterOut_Negative <= std_logic_vector( -signed(ANC_FilterOut) );
     
-    SP_FILTER : entity work.Discrete_FIR_Filter_12
+    SP_FILTER : entity work.Discrete_FIR_Filter
+    generic map(L => 24)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => SP_en,
-        Discrete_FIR_Filter_in => AF_REF_SUM,
-        Discrete_FIR_Filter_coeff => Wsp,
-        Discrete_FIR_Filter_out => SP_FilterOut
+        input => AF_REF_SUM,
+        coeff => Wsp,
+        output => SP_FilterOut
     );
         SP_en <= '1';
         
-    ANC_FILTER : entity work.Discrete_FIR_Filter_24
+    ANC_FILTER : entity work.Discrete_FIR_Filter
+    generic map(L => 48)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => ANC_en,
-        Discrete_FIR_Filter_in => AF_REF_SUM,
-        Discrete_FIR_Filter_coeff => Wanc,
-        Discrete_FIR_Filter_out => ANC_FilterOut
+        input => AF_REF_SUM,
+        coeff => Wanc,
+        output => ANC_FilterOut
     );
         ANC_en <= '1';
         
-    AF_FILTER : entity work.Discrete_FIR_Filter_24
+    AF_FILTER : entity work.Discrete_FIR_Filter
+    generic map(L => 24)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => AF_en,
-        Discrete_FIR_Filter_in => antiNoiseAdaptDelayed,
-        Discrete_FIR_Filter_coeff => Waf,
-        Discrete_FIR_Filter_out => AF_FilterOut
+        input => antiNoiseAdaptDelayed,
+        coeff => Waf,
+        output => AF_FilterOut
     );
         AF_en <= '1';
         
     LMS_UPDATE : entity work.LMS_Update
-    generic map(L => 24)
+    generic map(L => 48)
     port map(
         clk_anc => clk_anc,
         clk_dsp => clk_dsp,
@@ -164,7 +170,7 @@ begin
         LMSU_adapt <= (NOT trainingMode) AND enable;
         LMSU_en <= LMSU_adapt;
     
-    SP_ESTIMATOR : entity work.LMS_Filter_12
+    SP_ESTIMATOR : entity work.LMS_Filter_24
     port map(
         clk => clk_anc,
         reset => reset,
@@ -207,7 +213,7 @@ begin
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 37) port map(clk_in => clk_anc, clk_out => clk_ila);
     CLK_GEN_DSP : entity work.clk_div
-    generic map(count => 48) port map(clk_in => clk, clk_out => clk_dsp);
+    generic map(count => 24) port map(clk_in => clk, clk_out => clk_dsp);
 --    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
 --    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
 --    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
