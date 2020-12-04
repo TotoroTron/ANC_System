@@ -40,7 +40,7 @@ entity ANC_System is
 end ANC_System;--
 
 architecture rtl of ANC_System is
-    signal clk_22Khz, clk_41Khz, clk_ila : std_logic := '0';
+    signal clk_22Khz, clk_41Khz, clk_dsp, clk_ila : std_logic := '0';
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
     signal AF_REF_SUM : std_logic_vector(23 downto 0);
     signal adapt, trainingMode: std_logic := '0';
@@ -149,9 +149,11 @@ begin
     );
         AF_en <= '1';
         
-    LMS_UPDATE : entity work.LMS_Update_24
+    LMS_UPDATE : entity work.LMS_Update
+    generic map(L => 24)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => LMSU_en,
         X => SP_FilterOut,
@@ -204,6 +206,8 @@ begin
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 37) port map(clk_in => clk_anc, clk_out => clk_ila);
+    CLK_GEN_DSP : entity work.clk_div
+    generic map(count => 48) port map(clk_in => clk, clk_out => clk_dsp);
 --    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
 --    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
 --    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system

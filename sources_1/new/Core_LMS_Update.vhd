@@ -33,9 +33,9 @@ begin
     
 	mu_err <= mu_signed * error_signed;
 	mu_err_cast <= mu_err(47 downto 24);
-	mult0 <= mu_err_cast * weight_in_signed;
+	mult0 <= mu_err_cast * input_signed;
 	mult0_cast <= mult0(47 downto 24);
-	add0 <= mult0_cast + input_signed;
+	add0 <= mult0_cast + weight_in_signed;
 	
 	weight_out <= std_logic_vector(add0);
 

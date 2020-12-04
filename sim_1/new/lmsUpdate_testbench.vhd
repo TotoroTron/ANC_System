@@ -27,7 +27,7 @@ architecture Behavioral of lmsUpdate_testbench is
     signal SP_en : std_logic := '0';
     
     signal ANC_FilterIn, ANC_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
-    signal Wanc, Wanc_d1, Wanc_d2 : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
+    signal Wanc, Wanc_d1 : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal ANC_en : std_logic := '0';
     
     signal PRI_FilterIn, PRI_FilterOut : std_logic_vector(23 downto 0) := (others => '0');
@@ -69,7 +69,6 @@ begin
     begin
         if rising_edge(clk_anc) then
             Wanc_d1 <= Wanc;
---            Wanc_d2 <= Wanc_d1;
         end if;
     end process;
     
@@ -98,7 +97,8 @@ begin
     LMS_Update_System : entity work.LMS_UPDATE --Unit Under Test
     port map(
         clk_anc => clk_anc,
-        clk => clk,
+        clk_dsp => clk,
+--        clk => clk_anc,
         reset => reset,
         enb => LMSU_en,
         X => LMSU_input,
