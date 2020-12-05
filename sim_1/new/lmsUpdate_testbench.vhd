@@ -72,14 +72,16 @@ begin
         end if;
     end process;
     
-    ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_12
+    ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter
+    generic map(L => 12)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => ESP_en,
-        Discrete_FIR_Filter_in => ESP_FilterIn,
-        Discrete_FIR_Filter_coeff => ESP_Coeff,
-        Discrete_FIR_Filter_out => ESP_FilterOut
+        input => ESP_FilterIn,
+        coeff => ESP_Coeff,
+        output => ESP_FilterOut
     );
         ESP_FilterIn <= sine_out;
         ESP_en <= '1';
@@ -94,22 +96,23 @@ begin
             tmp(3) <= "001011001100110011001100";
         ESP_Coeff(5) <= std_logic_vector(-signed(tmp(3)));-- -0.175
     
-    LMS_Update_System : entity work.LMS_UPDATE --Unit Under Test
-    port map(
-        clk_anc => clk_anc,
-        clk_dsp => clk_dsp,
---        clk => clk_anc,
-        reset => reset,
-        enb => LMSU_en,
-        X => LMSU_input,
-        E => LMSU_error,
-        adapt => adapt,
-        W => Wanc
-    );
-        LMSU_input <= ESP_FilterOut;
-        LMSU_error <= summation;
-        LMSU_en <= '1';
-        adapt <= '1';
+--    LMS_Update_System : entity work.LMS_UPDATE --Unit Under Test
+--    generic map(L => 12)
+--    port map(
+--        clk_anc => clk_anc,
+--        clk_dsp => clk_dsp,
+----        clk => clk_anc,
+--        reset => reset,
+--        enb => LMSU_en,
+--        X => LMSU_input,
+--        E => LMSU_error,
+--        adapt => adapt,
+--        W => Wanc
+--    );
+--        LMSU_input <= ESP_FilterOut;
+--        LMSU_error <= summation;
+--        LMSU_en <= '1';
+--        adapt <= '1';
     
 --    ANC_FILTER : entity work.Discrete_FIR_Filter_12
 --    port map(
@@ -121,6 +124,7 @@ begin
 --        Discrete_FIR_Filter_out => ANC_FilterOut
 --    );
     ANC_FILTER : entity work.Discrete_FIR_Filter
+    generic map(L => 12)
     port map(
         clk_anc => clk_anc,
         clk_dsp => clk_dsp,
@@ -134,14 +138,16 @@ begin
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
         ANC_en <= '1';
         
-    SECONDARY_PATH : entity work.Discrete_FIR_Filter_12
+    SECONDARY_PATH : entity work.Discrete_FIR_Filter
+    generic map(L => 12)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => SP_en,
-        Discrete_FIR_Filter_in => SP_FilterIn,
-        Discrete_FIR_Filter_coeff => SP_Coeff,
-        Discrete_FIR_Filter_out => SP_FilterOut
+        input => SP_FilterIn,
+        coeff => SP_Coeff,
+        output => SP_FilterOut
     );
         SP_FilterIn <= ANC_FilterOut_inv;
         SP_en <= '1';
@@ -154,14 +160,16 @@ begin
         SP_Coeff(4) <= std_logic_vector(-signed(tmp(7))); -- -0.2
         SP_Coeff(5) <= std_logic_vector(-signed(tmp(7))); -- -0.2    
         --
-    PRIMARY_PATH : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
+    PRIMARY_PATH : entity work.Discrete_FIR_Filter --"lms filter copy in matlab"
+    generic map(L => 12)
     port map(
-        clk => clk_anc,
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
         reset => reset,
         enb => PRI_en,
-        Discrete_FIR_Filter_in => PRI_FilterIn,
-        Discrete_FIR_Filter_coeff => PRI_Coeff,
-        Discrete_FIR_Filter_out => PRI_FilterOut
+        input => PRI_FilterIn,
+        coeff => PRI_Coeff,
+        output => PRI_FilterOut
     );
         PRI_FilterIn <= sine_out;
         PRI_en <= '1';

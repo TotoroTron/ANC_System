@@ -37,21 +37,18 @@ entity fir_testbench is
 end fir_testbench;
 
 architecture Behavioral of fir_testbench is
-    signal clk, reset, enb, ce_out, clk_enable : std_logic := '0';
-    signal fir_in, fir_out, sine_out: std_logic_vector(23 downto 0);
+    signal clk_anc, clk_dsp, reset, enb, ce_out, clk_enable : std_logic := '0';
+    signal fir1_in, fir1_out, fir2_in, fir2_out, sine_out: std_logic_vector(23 downto 0);
     signal Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
-    constant clk_period : time := 8ns;
-    signal dummy : std_logic_vector(23 downto 0):= X"200000";
-    signal dummy_out : std_logic_vector(23 downto 0);
+    constant t1 : time := 500ns;
+    constant t2 : time := 10ns;
 begin
-    dummy_out <= std_logic_vector(-signed(dummy));
     STIMULUS : process
     begin
-        wait until rising_edge(clk);
         enb <= '1'; clk_enable <= '1';
-        for i in 0 to 500 loop
-        wait until rising_edge(clk);
-        end loop;
+--        for i in 0 to 500 loop
+--        wait until rising_edge(clk_anc);
+--        end loop;
 
         wait;
     end process;
@@ -62,29 +59,49 @@ begin
         Coeff(3) <= X"E00000"; -- -0.125
     SINE : entity work.sine_generator(amplitude_49)
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         clk_enable => clk_enable,
         Out1 => sine_out
     );
 
-    CLOCK: process
+    CLOCK_ANC: process
     begin
-        clk <= '0';
-        wait for clk_period/2;
-        clk <= '1';
-        wait for clk_period/2;
+        clk_anc <= '0';
+        wait for t1/2;
+        clk_anc <= '1';
+        wait for t1/2;
     end process;
     
-    UUT: entity work.Discrete_FIR_Filter_24
+    CLOCK_DSP: process
+    begin
+        clk_dsp <= '0';
+        wait for t2/2;
+        clk_dsp <= '1';
+        wait for t2/2;
+    end process;
+    
+    PARALLEL: entity work.Discrete_FIR_Filter_24
     port map(
-        clk => clk,
+        clk => clk_anc,
         reset => reset,
         enb => enb,
-        Discrete_FIR_Filter_in => fir_in,
+        Discrete_FIR_Filter_in => fir1_in,
         Discrete_FIR_Filter_coeff => Coeff,
-        Discrete_FIR_Filter_out => fir_out
+        Discrete_FIR_Filter_out => fir1_out
     );
-    fir_in <= sine_out;
-    --
+    fir1_in <= sine_out;
+    
+    PIPELINED: entity work.Discrete_FIR_Filter
+    generic map(L => 24)
+    port map(
+        clk_anc => clk_anc,
+        clk_dsp => clk_dsp,
+        reset => reset,
+        enb => enb,
+        input => fir2_in,
+        coeff => coeff,
+        output => fir2_out
+    );
+    fir2_in <= sine_out;
 end Behavioral;

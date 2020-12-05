@@ -63,9 +63,8 @@ begin
 		IF reset = '1' THEN
 			input_buffer <= (OTHERS => (others => '0'));
 		ELSIF enb = '1' THEN
+		    input_buffer(0) <= input_signed;
 			input_buffer(1 to L-1) <= input_buffer(0 to L-2);
-			input_buffer(0) <= input_signed;
-			
 		END IF;
 	END IF;
 	END PROCESS FIR_FILTER_REGISTER;
@@ -92,10 +91,9 @@ begin
                 add0 := add0 + mult0_cast; --accumulate
                 output_next <= add0;
                 if count < L-1 then count := count + 1; end if;
-            else
-                output <= std_logic_vector(output_next);
             end if;
         end if;
     END PROCESS;
+    output <= std_logic_vector(output_next);
 
 end Behavioral;

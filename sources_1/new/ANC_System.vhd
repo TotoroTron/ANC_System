@@ -22,6 +22,8 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 USE work.top_level_pkg.ALL;
+Library xpm;
+use xpm.vcomponents.all;
 
 entity ANC_System is
     port(
@@ -210,12 +212,10 @@ begin
     generic map(count => 556) port map(clk_in => clk, clk_out => clk_22Khz);
     CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
-    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
-    generic map(count => 37) port map(clk_in => clk_anc, clk_out => clk_ila);
     CLK_GEN_DSP : entity work.clk_div
     generic map(count => 24) port map(clk_in => clk, clk_out => clk_dsp);
---    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
---    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
+    CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
+    generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
 --    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
 --    generic map(count => 12500) port map(clk_in => clk, clk_out => clk_10Khz);
     
@@ -281,15 +281,15 @@ begin
 --        PROBE22 => Wanc(22),
 --        PROBE23 => Wanc(23)
 --    );
---    DEBUGGER_SIGNALS : ila_3
---    PORT MAP(
---        clk     => clk_ila,
---        probe0  => refMic,
---        probe1  => errMic,
---        probe2  => noise,
---        probe3  => antiNoise,
---        probe4  => SP_FilterOut,
---        probe5  => AF_FilterOut,
---        probe6  => ANC_FilterOut
---    );
+    DEBUGGER_SIGNALS : ila_3
+    PORT MAP(
+        clk     => clk_ila,
+        probe0  => refMic,
+        probe1  => errMic,
+        probe2  => noise,
+        probe3  => antiNoise,
+        probe4  => SP_FilterOut,
+        probe5  => AF_FilterOut,
+        probe6  => ANC_FilterOut
+    );
 end rtl;

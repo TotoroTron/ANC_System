@@ -65,11 +65,11 @@ BEGIN
 					mux1_out := mux1_in(to_integer(count)); --weights mux
 					mux2_out := mux2_in(to_integer(count)); --inputs mux
 					
-					mu_err := mu * E_signed;
-					mu_err_cast := mu_err(47 downto 24);
-					mult0 := mu_err_cast * mux2_out;
-					mult0_cast := mult0(47 downto 24);
-					add0 := mult0_cast + mux1_out;
+					mu_err := mu * E_signed; -- mu * error
+					mu_err_cast := mu_err(47 downto 24); --truncate
+					mult0 := mu_err_cast * mux2_out; -- multiply by input
+					mult0_cast := mult0(47 downto 24); --truncate
+					add0 := mult0_cast + mux1_out; --weight output, carry-out discarded
 									
 					demux1_in := add0;
 					demux1_out(to_integer(count)) := demux1_in;
