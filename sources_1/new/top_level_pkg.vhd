@@ -24,6 +24,94 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_signed72 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     
+    component primary_path is
+    generic(L : integer);
+	port(
+		clk_anc 	: in std_logic;
+		clk_dsp 	: in std_logic;
+		reset 		: in std_logic;
+		enable 		: in std_logic;
+		
+		filt_input 	: in std_logic_vector(23 downto 0);
+		filt_output : out std_logic_vector(23 downto 0);
+		algo_input 	: in std_logic_vector(23 downto 0);
+		algo_error 	: in std_logic_vector(23 downto 0);
+		algo_adapt 	: in std_logic
+	);
+    end component primary_path;
+    
+    component secondary_path is
+        generic(L : integer);
+        port(
+            clk_anc 	: in std_logic;
+            clk_dsp 	: in std_logic;
+            reset 		: in std_logic;
+            enable 		: in std_logic;
+            
+            SPE_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
+            SPE_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
+            SPE_adapt	: in std_logic; --secondary path estimator adapt
+            
+            SPF_input	: in std_logic_vector(23 downto 0); --secondary path filter input
+            SPF_output	: out std_logic_vector(23 downto 0) --secondary path filter output
+        );
+    end component secondary_path;    
+    
+    component LMS_Update_FSM 
+	generic( L : integer); --length
+	port( 
+		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
+		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+        reset 		: IN  std_logic;
+        en   		: IN  std_logic;
+        input 		: IN  std_logic_vector(23 DOWNTO 0);
+        error 		: IN  std_logic_vector(23 DOWNTO 0);
+        Adapt       : IN  std_logic;
+		--MEMORY INTERFACE
+		addr 		: out std_logic_vector(7 downto 0);
+		ram_en 		: out std_logic;
+		wr_en 		: out std_logic;
+		data_in 	: in  std_logic_vector(23 downto 0);
+		data_out 	: out std_logic_vector(23 downto 0);
+		data_valid 	: out std_logic
+    ); end component;
+    
+    component LMS_Filter_FSM 
+	generic( L : integer); --length
+	port( 
+		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
+		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+        reset 		: IN  std_logic;
+        en   		: IN  std_logic;
+        input 		: IN  std_logic_vector(23 DOWNTO 0);
+        desired		: IN  std_logic_vector(23 DOWNTO 0);
+        Adapt       : IN  std_logic;
+		--MEMORY INTERFACE
+		addr 		: out std_logic_vector(7 downto 0);
+		ram_en 		: out std_logic;
+		wr_en 		: out std_logic;
+		data_in 	: in  std_logic_vector(23 downto 0);
+		data_out 	: out std_logic_vector(23 downto 0);
+		data_valid 	: out std_logic
+    ); end component;
+    
+	component Discrete_FIR_Filter_FSM
+	generic( L : integer);
+	PORT(
+		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
+		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+		reset 		: IN  std_logic;
+        en   		: IN  std_logic;
+        input 		: IN  std_logic_vector(23 DOWNTO 0);
+		output 		: out std_logic_vector(23 downto 0);
+		--MEMORY INTERFACE
+		addr 		: out std_logic_vector(7 downto 0);
+		ram_en 		: out std_logic;
+		wr_en		: out std_logic;
+		data_in 	: in  std_logic_vector(23 downto 0);
+		data_valid 	: in  std_logic
+	); end component;
+    
     COMPONENT ILA_0
         PORT(
             CLK         : IN STD_LOGIC;

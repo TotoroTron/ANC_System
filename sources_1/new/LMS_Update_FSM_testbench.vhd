@@ -5,15 +5,17 @@ USE IEEE.numeric_std.ALL;
 USE work.top_level_pkg.ALL;
 
 
-entity lmsUpdate_testbench is
+entity lms_update_fsm_testbench is
 --  Port ( );
-end lmsUpdate_testbench;
+end lms_update_fsm_testbench;
 --
-architecture Behavioral of lmsUpdate_testbench is
-    signal clk_anc, clk_sine, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
+architecture Behavioral of lms_update_fsm_testbench is
+    signal clk_dsp, clk_anc, clk_sine, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
     signal sine_out, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
     constant t1 : time := 100ns; --anc
-    constant t2 : time := 10ns; --sine
+    constant t3 : time := 10ns; --sine
+    constant t2 : time := 0.1ns; --dsp
+    
         
     signal LMSU_input, LMSU_error: std_logic_vector(23 downto 0) := (others => '0');
     signal LMSU_en : std_logic := '0';
@@ -49,24 +51,32 @@ begin
         wait for t1/2;
     end process;
     
+    CLOCK_DSP : process
+    begin
+        clk_dsp <= '0';
+        wait for t2/2;
+        clk_dsp <= '1';
+        wait for t2/2;
+    end process;
+    
     CLOCK_SINE : process
     begin
         clk_sine <= '0';
-        wait for t2/2;
+        wait for t3/2;
         clk_sine <= '1';
-        wait for t2/2;    
+        wait for t3/2;    
     end process;
     
-    SINE : entity work.sine_generator(amplitude_15)
+    SINE : entity work.sine_generator(amplitude_15) --1000 samples/period
     port map(
-        clk => clk_sine,
+        clk => clk_sine, --
         reset => reset,
         clk_enable => clk_enable,
         Out1 => sine_out
     );
 --    TRAINING_NOISE : entity work.PRBS
---    port map(clk => clk_sine, rst => reset, ce => clk_enable, rand => rand_out);
---    rand_amp <= std_logic_vector(shift_right(signed(rand_out), 4));
+--    port map(clk => clk_anc, rst => reset, ce => clk_enable, rand => rand_out);
+--    rand_amp <= std_logic_vector(shift_right(signed(rand_out), 2));
     
     DELAY_REGISTER : process(clk_anc)
     begin
@@ -75,6 +85,27 @@ begin
         end if;
     end process;
     
+    PRIMARY_SOUND_PATH : entity work.primary_path
+    generic map(L => 12)
+	port map(
+		clk_anc 	=> clk_anc,
+		clk_dsp 	=> clk_dsp,
+		reset 		=> reset,
+		enable 		=> ANC_en,
+		filt_input 	=> ANC_FilterIn,
+		filt_output => ANC_FilterOut,
+		algo_input 	=> LMSU_input,
+		algo_error 	=> LMSU_error,
+		algo_adapt 	=> adapt
+	);
+        ANC_FilterIn <= sine_out;
+        ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
+        ANC_en <= '1';
+        LMSU_input <= ESP_FilterOut;
+        LMSU_error <= summation;
+        LMSU_en <= '1';
+        adapt <= '1';
+        
     ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_12
     port map(
         clk => clk_anc,
@@ -84,7 +115,7 @@ begin
         Discrete_FIR_Filter_coeff => ESP_Coeff,
         Discrete_FIR_Filter_out => ESP_FilterOut
     );
-        ESP_FilterIn <= rand_amp;
+        ESP_FilterIn <= sine_out;
         ESP_en <= '1';
         ESP_Coeff(0) <= "011101110100101111000110";-- 0.466
         ESP_Coeff(1) <= "100010000111001010110000";-- 0.533
@@ -96,35 +127,7 @@ begin
         ESP_Coeff(4) <= std_logic_vector(-signed(tmp(2)));-- -0.231
             tmp(3) <= "001011001100110011001100";
         ESP_Coeff(5) <= std_logic_vector(-signed(tmp(3)));-- -0.175
-    
-    LMS_Update : entity work.LMS_UPDATE_12 --Unit Under Test
-    port map(
-        clk => clk_anc,
-        reset => reset,
-        enb => LMSU_en,
-        X => LMSU_input,
-        E => LMSU_error,
-        adapt => adapt,
-        W => Wanc
-    );
-        LMSU_input <= ESP_FilterOut;
-        LMSU_error <= summation;
-        LMSU_en <= '1';
-        adapt <= '1';
-    
-    ANC_FILTER : entity work.Discrete_FIR_Filter_12
-    port map(
-        clk => clk_anc,
-        reset => reset,
-        enb => ANC_en,
-        Discrete_FIR_Filter_in => ANC_FilterIn,
-        Discrete_FIR_Filter_coeff => Wanc_d1,
-        Discrete_FIR_Filter_out => ANC_FilterOut
-    );
-        ANC_FilterIn <= rand_amp;
-        ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
-        ANC_en <= '1';
-        
+            
     SECONDARY_PATH : entity work.Discrete_FIR_Filter_12
     port map(
         clk => clk_anc,
@@ -143,8 +146,8 @@ begin
         SP_Coeff(3) <= std_logic_vector(-signed(tmp(6))); -- -0.3
             tmp(7) <= "001100110011001100110011";
         SP_Coeff(4) <= std_logic_vector(-signed(tmp(7))); -- -0.2
-        SP_Coeff(5) <= std_logic_vector(-signed(tmp(7))); -- -0.2    
-        
+        SP_Coeff(5) <= std_logic_vector(-signed(tmp(7))); -- -0.2        
+    
     PRIMARY_PATH : entity work.Discrete_FIR_Filter_12 --"lms filter copy in matlab"
     port map(
         clk => clk_anc,
@@ -154,7 +157,7 @@ begin
         Discrete_FIR_Filter_coeff => PRI_Coeff,
         Discrete_FIR_Filter_out => PRI_FilterOut
     );
-        PRI_FilterIn <= rand_amp;
+        PRI_FilterIn <= sine_out;
         PRI_en <= '1';
         PRI_Coeff(0) <= "000011001100110011001100"; -- 0.05
         PRI_Coeff(1) <= (others => '0');
@@ -170,7 +173,7 @@ begin
         PRI_Coeff(9) <= (others => '0');
         PRI_Coeff(10) <= "000100110011001100110011"; -- 0.075
         PRI_Coeff(11) <= (others => '0');
-        
     summation <= std_logic_vector( signed(PRI_FilterOut) + signed(SP_FilterOut));
+    
     
 end Behavioral;

@@ -6,6 +6,7 @@ USE work.top_level_pkg.ALL;
 Library xpm;
 use xpm.vcomponents.all;
 entity secondary_path is
+    generic(L : integer := 12);
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
@@ -22,40 +23,7 @@ entity secondary_path is
 end entity secondary_path;
 
 architecture rtl of secondary_path is
-	component LMS_Filter_FSM 
-	generic( L : integer); --length
-	port( 
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-        desired		: IN  std_logic_vector(23 DOWNTO 0);
-        Adapt       : IN  std_logic;
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en 		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_out 	: out std_logic_vector(23 downto 0);
-		data_valid 	: out std_logic
-    ); end component;
-	component Discrete_FIR_Filter_FSM
-	generic( L : integer);
-	PORT(
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-		reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-		output 		: out std_logic_vector(23 downto 0);
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_valid 	: in  std_logic
-	); end component;
+
 	signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
 	signal douta 			:	std_logic_vector(23 downto 0) := (others => '0');
@@ -85,7 +53,7 @@ architecture rtl of secondary_path is
 begin
 
 LMS_FILTER : entity work.LMS_Filter_FSM
-generic map(L => 24)
+generic map(L => L)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -104,7 +72,7 @@ port map(
 );
 
 FIR_FILTER : entity work.Discrete_FIR_Filter_FSM
-generic map(L => 24)
+generic map(L => L)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,

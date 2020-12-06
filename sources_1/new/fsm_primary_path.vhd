@@ -7,6 +7,7 @@ Library xpm;
 use xpm.vcomponents.all;
 
 entity primary_path is
+    generic(L : integer := 128);
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
@@ -15,7 +16,6 @@ entity primary_path is
 		
 		filt_input 	: in std_logic_vector(23 downto 0);
 		filt_output : out std_logic_vector(23 downto 0);
-		adapt		: in std_logic;
 		algo_input 	: in std_logic_vector(23 downto 0);
 		algo_error 	: in std_logic_vector(23 downto 0);
 		algo_adapt 	: in std_logic
@@ -23,40 +23,6 @@ entity primary_path is
 end entity primary_path;
 
 architecture rtl of primary_path is
-	component LMS_Update_FSM 
-	generic( L : integer); --length
-	port( 
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-        error 		: IN  std_logic_vector(23 DOWNTO 0);
-        Adapt       : IN  std_logic;
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en 		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_out 	: out std_logic_vector(23 downto 0);
-		data_valid 	: out std_logic
-    ); end component;
-	component Discrete_FIR_Filter_FSM
-	generic( L : integer);
-	PORT(
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-		reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-		output 		: out std_logic_vector(23 downto 0);
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_valid 	: in  std_logic
-	); end component;
 	signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
 	signal douta 			:	std_logic_vector(23 downto 0) := (others => '0');
@@ -65,8 +31,6 @@ architecture rtl of primary_path is
 	signal sbiterrb 		:	std_logic := '0';
 	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');
 	signal addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
-	signal clka 			:	std_logic := '0';
-	signal clkb 			:	std_logic := '0';
 	signal dina 			:	std_logic_vector(23 downto 0) := (others => '0');
 	signal dinb 			:	std_logic_vector(23 downto 0) := (others => '0');
 	signal ena 				:	std_logic := '0';
@@ -77,8 +41,6 @@ architecture rtl of primary_path is
 	signal injectsbiterrb 	:	std_logic := '0';
 	signal regcea 			:	std_logic := '0';
 	signal regceb 			:	std_logic := '0';
-	signal rsta 			:	std_logic := '0';
-	signal rstb 			:	std_logic := '0';
 	signal sleep 			:	std_logic := '0';
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
@@ -86,7 +48,7 @@ architecture rtl of primary_path is
 begin
 
 LMS_UPDATE : entity work.LMS_UPDATE_FSM
-generic map(L => 24)
+generic map(L => L)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -94,7 +56,7 @@ port map(
 	en			=> enable,
 	input		=> algo_input,
 	error		=> algo_error,
-	adapt		=> adapt,
+	adapt		=> algo_adapt,
 	--ram interface
 	addr		=> addra,
 	ram_en		=> ena,
@@ -105,7 +67,7 @@ port map(
 );
 
 FIR_FILTER : entity work.Discrete_FIR_Filter_FSM
-generic map(L => 24)
+generic map(L => L)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -137,7 +99,7 @@ generic map (
 	MEMORY_INIT_PARAM => "0", -- String
 	MEMORY_OPTIMIZATION => "true", -- String
 	MEMORY_PRIMITIVE => "auto", -- String
-	MEMORY_SIZE => 768, -- DECIMAL
+	MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
 	MESSAGE_CONTROL => 0, -- DECIMAL
 	READ_DATA_WIDTH_A => 24, -- DECIMAL
 	READ_DATA_WIDTH_B => 24, -- DECIMAL
@@ -177,8 +139,8 @@ port map (
 	injectsbiterrb => injectsbiterrb, --unused
 	regcea => regcea, --unused
 	regceb => regceb, --unused
-	rsta => rsta,
-	rstb => rstb,
+	rsta => reset,
+	rstb => reset,
 	sleep => sleep, --unused
 	wea => wea,
 	web => web
