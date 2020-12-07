@@ -66,23 +66,17 @@ BEGIN
         variable mult0			: signed(47 downto 0) := (others => '0');
         variable mult0_cast		: signed(52 downto 0) := (others => '0');
         variable accumulator	: signed(52 downto 0) := (others => '0');
+        variable v_input        : signed(23 downto 0) := (others => '0');
     BEGIN
         CASE STATE IS
         WHEN S0 => --initial state
             ram_en <= '0'; wr_en <= '0';
             s_addr <= (others => '0');
             accumulator := (others => '0');
---            IF data_valid = '0' THEN
---                idle <= '1';
---                NEXT_STATE <= S0;
---            ELSIF data_valid = '1' AND idle = '1' THEN
---                idle <= '0';
---                NEXT_STATE <= S1;
---            END IF;
-            IF clk_anc = '1' THEN
+            IF data_valid = '0' THEN
                 idle <= '1';
                 NEXT_STATE <= S0;
-            ELSIF clk_anc = '0' AND idle = '1' THEN
+            ELSIF data_valid = '1' AND idle = '1' THEN
                 idle <= '0';
                 NEXT_STATE <= S1;
             END IF;
@@ -95,11 +89,9 @@ BEGIN
         WHEN S3 => --clock-in data from memory, increment address
             ram_en <= '0'; wr_en <= '0';
             weight_in := signed(data_in);
-            if s_addr = 0 then
-                mult0 := weight_in * input_signed;
-            else
-                mult0 := weight_in * input_buffer(to_integer(s_addr)-1);
-            end if;
+            if s_addr = 0 then v_input := input_signed;
+            else v_input := input_buffer(to_integer(s_addr)-1); end if;
+            mult0 := weight_in * v_input;
             mult0_cast := resize(mult0, 53);
             accumulator := accumulator + mult0_cast;
             IF s_addr < L-1 THEN

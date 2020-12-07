@@ -65,13 +65,6 @@ begin
         LMSU1_error <= std_logic_vector(shift_right(signed(sine_out),2));
         LMSU1_en <= '1';
         adapt <= '1';
-        
-    LMSU2 : entity work.LMS_Update_FSM
-    generic map(L => 12)
-    port map(
-        
-    );    
-    
     
     SINE : entity work.sine_generator(amplitude_49)
     port map(
