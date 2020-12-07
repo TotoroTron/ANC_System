@@ -24,7 +24,7 @@ ENTITY LMS_Update_FSM IS
 END LMS_Update_FSM;
 
 ARCHITECTURE Behavioral OF LMS_Update_FSM IS
-    TYPE STATE_TYPE IS (S0, S1, S2, S3);
+    TYPE STATE_TYPE IS (S0, S1, S2, S3, S4);
     SIGNAL STATE            	: STATE_TYPE := S0;
     SIGNAL NEXT_STATE           : STATE_TYPE;
     SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
@@ -63,42 +63,54 @@ BEGIN
     
     DSP_STATE_MACHINE : PROCESS(STATE, clk_anc)
         variable weight_in 		: signed(23 downto 0) := (others => '0');
-        variable weight_out 	: signed(23 downto 0) := (others => '0');
+        variable weight_out 	: signed(24 downto 0) := (others => '0');
         variable mu             : signed(23 downto 0) := "001000000000000000000000";
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated 
         variable mult0          : signed(47 downto 0) := (others => '0'); --product of mu_error and weight_in
         variable mult0_cast     : signed(23 downto 0) := (others => '0'); --mult0 truncated 
+        variable v_input        : signed(23 downto 0) := (others => '0');
     BEGIN
         CASE STATE IS
         WHEN S0 => --initial state
-            ram_en <= '0'; wr_en <= '0'; data_valid <= '0';
+            ram_en <= '0'; wr_en <= '0'; 
             s_addr <= (others => '0');
             data_out <= (others => '0');
             IF clk_anc = '1' THEN
+                data_valid <= '0';
                 idle <= '1';
                 NEXT_STATE <= S0;
             ELSIF clk_anc = '0' AND idle = '1' THEN
+                data_valid <= '1'; --filter reads from memory before write
                 idle <= '0';
                 NEXT_STATE <= S1;
             END IF;
         WHEN S1 => --initiate read from memory (read latency = 1)
             ram_en <= '1'; wr_en <= '0'; --data_valid <= '0';
             NEXT_STATE <= S2;
-        WHEN S2 => --clock-in data from memory, initiate write to memory
-            ram_en <= '1'; wr_en <= '1'; data_valid <= '1';
+        WHEN S2 =>
+            ram_en <= '0'; wr_en <= '0'; --data_valid <= '0';
+            NEXT_STATE <= S3;
+        WHEN S3 => --data from memory clocked-in, initiate write to memory
+            ram_en <= '1'; wr_en <= '1'; --data_valid <= '0';
             weight_in := signed(data_in);
+            if s_addr = 0 then v_input := input_signed;
+            else v_input := input_buffer(to_integer(s_addr)-1); end if;
             mu_err := mu * error_signed; --mu * error
             mu_err_cast := mu_err(47 downto 24); --truncate
-            mult0 := mu_err_cast * input_buffer(to_integer(s_addr)); --mult by input
+            mult0 := mu_err_cast * v_input; --mult by input
             mult0_cast := mult0(47 downto 24); --truncate
-            weight_out := mult0_cast + weight_in;
-            data_out <= std_logic_vector(weight_out); --output value to memory
-            NEXT_STATE <= S3;
-        WHEN S3 => --increment address
-            ram_en <= '0'; wr_en <= '0'; data_valid <= '1';
+            if adapt = '1' then
+                weight_out := resize(mult0_cast,25) + resize(weight_in,25);
+            else
+                weight_out := resize(weight_in, 25);
+            end if;
+            data_out <= std_logic_vector(weight_out(23 downto 0)); --output value to memory
+            NEXT_STATE <= S4;
+        WHEN S4 => --increment address
+            ram_en <= '0'; wr_en <= '0'; --data_valid <= '1';
             IF s_addr < L-1 THEN
-            s_addr <= s_addr + 1;
+                s_addr <= s_addr + 1;
                 NEXT_STATE <= S1;
             ELSIF s_addr = L-1 THEN
                 s_addr <= (others => '0');

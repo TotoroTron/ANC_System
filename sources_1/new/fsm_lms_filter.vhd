@@ -102,7 +102,7 @@ BEGIN
             ram_en <= '0'; wr_en <= '0'; data_valid <= '0';
             NEXT_STATE <= S3;
         WHEN S3 => --clock-in data from memory, increment address
-            ram_en <= '0'; wr_en <= '0'; data_valid <= '0';
+            ram_en <= '0'; wr_en <= '0';
             weight_in 	:= signed(data_in);
             if s_addr = 0 then v_input := input_signed;
             else v_input := input_buffer(to_integer(s_addr)-1); end if;
@@ -114,18 +114,18 @@ BEGIN
                 s_addr <= s_addr + 1;
                 NEXT_STATE <= S1;
             ELSIF s_addr = L-1 THEN
+                data_valid <= '1';
                 s_addr <= (others => '0');
                 NEXT_STATE <= S4;
             END IF;
-            
         WHEN S4 => --initiate read from memory (read latency = 1)
             ram_en <= '1'; wr_en <= '0'; --data_valid <= '0';
             NEXT_STATE <= S5;
         WHEN S5 => --wait for read latency
             ram_en <= '0'; wr_en <= '0'; --data_valid <= '0';
             NEXT_STATE <= S6;
-        WHEN S6 => --increment address
-            ram_en <= '1'; wr_en <= '1'; data_valid <= '1';
+        WHEN S6 => --data from memory clocked-in, initiate write memory
+            ram_en <= '1'; wr_en <= '1'; --data_valid <= '0';
             weight_in       := signed(data_in);
             if s_addr = 0 then v_input := input_signed;
             else v_input := input_buffer(to_integer(s_addr)-1); end if;
@@ -143,7 +143,7 @@ BEGIN
             data_out <= std_logic_vector(weight_out(23 downto 0));
             NEXT_STATE <= S7;
         WHEN S7 => --wait for write latency
-            ram_en <= '0'; wr_en <= '0'; data_valid <= '1';
+            ram_en <= '0'; wr_en <= '0'; --data_valid <= '1';
             IF s_addr < L-1 THEN
                 s_addr <= s_addr + 1;
                 NEXT_STATE <= S4;

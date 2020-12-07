@@ -22,7 +22,7 @@ ENTITY Discrete_FIR_Filter_FSM IS
 END Discrete_FIR_Filter_FSM;
 
 ARCHITECTURE Behavioral OF Discrete_FIR_Filter_FSM IS
-	TYPE STATE_TYPE IS (S0, S1, S2, S3);
+	TYPE STATE_TYPE IS (S0, S1, S2, S3, S4);
 	SIGNAL STATE                : STATE_TYPE := S0;
 	SIGNAL NEXT_STATE 	        : STATE_TYPE;
 	SIGNAL input_signed 		: signed(23 downto 0) := (others => '0');
@@ -86,7 +86,7 @@ BEGIN
         WHEN S2 => --wait for read latency
             ram_en <= '0'; wr_en <= '0';
             NEXT_STATE <= S3;
-        WHEN S3 => --clock-in data from memory, increment address
+        WHEN S3 => --data from memory clocked-in
             ram_en <= '0'; wr_en <= '0';
             weight_in := signed(data_in);
             if s_addr = 0 then v_input := input_signed;
@@ -94,6 +94,9 @@ BEGIN
             mult0 := weight_in * v_input;
             mult0_cast := resize(mult0, 53);
             accumulator := accumulator + mult0_cast;
+            NEXT_STATE <= S4;
+        WHEN S4 => --increment address
+            ram_en <= '0'; wr_en <= '0';
             IF s_addr < L-1 THEN
                 s_addr <= s_addr + 1;
                 NEXT_STATE <= S1;

@@ -84,7 +84,7 @@ begin
         Discrete_FIR_Filter_coeff => ESP_Coeff,
         Discrete_FIR_Filter_out => ESP_FilterOut
     );
-        ESP_FilterIn <= rand_amp;
+        ESP_FilterIn <= sine_out;
         ESP_en <= '1';
         ESP_Coeff(0) <= "011101110100101111000110";-- 0.466
         ESP_Coeff(1) <= "100010000111001010110000";-- 0.533
@@ -121,7 +121,7 @@ begin
         Discrete_FIR_Filter_coeff => Wanc_d1,
         Discrete_FIR_Filter_out => ANC_FilterOut
     );
-        ANC_FilterIn <= rand_amp;
+        ANC_FilterIn <= sine_out;
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
         ANC_en <= '1';
         
@@ -154,7 +154,7 @@ begin
         Discrete_FIR_Filter_coeff => PRI_Coeff,
         Discrete_FIR_Filter_out => PRI_FilterOut
     );
-        PRI_FilterIn <= rand_amp;
+        PRI_FilterIn <= sine_out;
         PRI_en <= '1';
         PRI_Coeff(0) <= "000011001100110011001100"; -- 0.05
         PRI_Coeff(1) <= (others => '0');
