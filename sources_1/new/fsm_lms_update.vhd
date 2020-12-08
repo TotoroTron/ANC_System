@@ -29,7 +29,7 @@ ARCHITECTURE Behavioral OF LMS_Update_FSM IS
     SIGNAL NEXT_STATE           : STATE_TYPE;
     SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
     SIGNAL error_signed         : signed(23 DOWNTO 0) := (others => '0');
-    SIGNAL input_buffer         : vector_of_signed24(0 TO L-1) := (others => (others => '0'));
+    SIGNAL input_buffer         : vector_of_signed24(0 TO L-2) := (others => (others => '0'));
     SIGNAL s_addr				: unsigned(7 downto 0) := (others => '0');
     SIGNAL idle                 : std_logic := '0';
 BEGIN
@@ -44,7 +44,7 @@ BEGIN
 		IF reset = '1' THEN
 			input_buffer <= (OTHERS => (others => '0'));
 		ELSIF en = '1' THEN
-			input_buffer(1 to L-1) <= input_buffer(0 to L-2);
+			input_buffer(1 to L-2) <= input_buffer(0 to L-3);
 			input_buffer(0) <= input_signed;
 		END IF;
 	END IF;

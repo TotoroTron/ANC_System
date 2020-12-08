@@ -13,12 +13,12 @@ entity secondary_path is
 		reset 		: in std_logic;
 		enable 		: in std_logic;
 		
-		SPE_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
-		SPE_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
-		SPE_adapt	: in std_logic; --secondary path estimator adapt
+		algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
+		algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
+		algo_adapt	: in std_logic; --secondary path estimator adapt
 		
-		SPF_input	: in std_logic_vector(23 downto 0); --secondary path filter input
-		SPF_output	: out std_logic_vector(23 downto 0) --secondary path filter output
+		filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
+		filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
 	);
 end entity secondary_path;
 
@@ -59,9 +59,9 @@ port map(
 	clk_dsp 	=> clk_dsp,
 	reset 		=> reset,
 	en			=> enable,
-	input		=> SPE_input,
-	desired		=> SPE_desired,
-	adapt		=> SPE_adapt,
+	input		=> algo_input,
+	desired		=> algo_desired,
+	adapt		=> algo_adapt,
 	--ram interface
 	addr		=> addra,
 	ram_en		=> ena,
@@ -78,8 +78,8 @@ port map(
 	clk_dsp 	=> clk_dsp,
 	reset 		=> reset,
 	en			=> enable,
-	input		=> SPF_input,
-	output		=> SPF_output,
+	input		=> filt_input,
+	output		=> filt_output,
 	--ram interface
 	addr		=> addrb,
 	ram_en		=> enb,

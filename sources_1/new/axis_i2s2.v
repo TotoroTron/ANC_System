@@ -23,6 +23,7 @@
 
 module axis_i2s2 (
     input  wire        axis_clk, // require: approx 22.591MHz
+    input wire [8:0]   count,
     input  wire        axis_resetn,
     
     input  wire [31:0] tx_axis_s_data,
@@ -44,11 +45,11 @@ module axis_i2s2 (
     output wire rx_sclk, // JA[6]
     input  wire rx_sdin // JA[7]
 );
-    reg [8:0] count = 9'd0;
+    //reg [8:0] count = 9'd0;
     localparam EOF_COUNT = 9'd455; // end of full I2S frame
     
-    always@(posedge axis_clk)
-        count <= count + 1;
+//    always@(posedge axis_clk)
+//        count <= count + 1;
     
     wire lrck = count[8];
     wire sclk = count[2];

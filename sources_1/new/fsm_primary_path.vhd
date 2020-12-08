@@ -7,7 +7,7 @@ Library xpm;
 use xpm.vcomponents.all;
 
 entity primary_path is
-    generic(L : integer := 128);
+    generic(L : integer := 12);
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;

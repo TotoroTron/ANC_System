@@ -29,6 +29,7 @@ entity ANC_System is
     port(
         --fpga
         clk : in std_logic; --125Mhz
+        clk_dsp : in std_logic;
         clk_anc : in std_logic; --10Khz
         reset : in std_logic;
         enable : in std_logic;
@@ -42,47 +43,52 @@ entity ANC_System is
 end ANC_System;--
 
 architecture rtl of ANC_System is
-    signal clk_22Khz, clk_41Khz, clk_dsp, clk_ila : std_logic := '0';
+    signal clk_22Khz, clk_41Khz, clk_ila : std_logic := '0';
     signal refMic, errMic, antiNoise, noise : std_logic_vector(23 downto 0);
-    signal AF_REF_SUM : std_logic_vector(23 downto 0);
+	
+    signal AF_REF_SUM : std_logic_vector(23 downto 0); --acoustic feedback output plus reference mic
     signal adapt, trainingMode: std_logic := '0';
-    signal Wanc : vector_of_std_logic_vector24(0 TO 47);-- := (others => (others => '0'));
-    signal Wsp : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
-    signal Waf : vector_of_std_logic_vector24(0 TO 23);-- := (others => (others => '0'));
-    
-    signal LMSU_adapt, LMSU_en : std_logic := '0';
-    signal SP_en, SP_ceOut : std_logic := '0';
-    signal SP_FilterOut : std_logic_vector(23 downto 0);
-
-    signal ANC_en : std_logic := '0';
-    signal ANC_FilterOut, ANC_FilterOut_Negative : std_logic_vector(23 downto 0);
-    
-    signal AF_en, AF_ceOut : std_logic := '0';
-    signal AF_FilterOut : std_logic_vector(23 downto 0);
-    
-    signal AntiNoiseAdapt, AntiNoiseAdaptDelayed : std_logic_vector(23 downto 0);
-    
-    signal SPE_en : std_logic := '0';
-    signal AFE_en : std_logic := '0';
-    
+    signal AntiNoiseAdapt, AntiNoiseAdapt_d1 : std_logic_vector(23 downto 0);
     signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0);
     signal SINE_en, rand_en : std_logic := '0';
     
     signal stim_count : integer range 0 to 1000000 := 0;
+    
+    --secondary path filter
+    signal SPF_en : std_logic := '1';
+    signal SPF_output : std_logic_vector(23 downto 0) := (others => '0');
+    --secondary path algorithm
+    signal SPA_en : std_logic := '1';
+    signal SPA_adapt : std_logic := '0';
+        
+    --primary path filter
+    signal PPF_en : std_logic := '1';
+    signal PPF_output, PPF_negative : std_logic_vector(23 downto 0) := (others => '0');
+    --primary path algorithm
+    signal PPA_en : std_logic := '1';
+    signal PPA_adapt : std_logic := '0';
+    
+    --acoustic feedback filter
+    signal AFF_en : std_logic := '1';
+    signal AFF_output : std_logic_vector(23 downto 0);
+    --acoustic feedback algorithm
+    signal AFA_en : std_logic := '1';
+    signal AFA_adapt : std_logic := '0';
+    
 begin
     
     SIGNAL_ROUTING_BUFFERS : process(clk_anc)
     begin
         if rising_edge(clk_anc) then
             refMic <= refMic_in; errMic <= errMic_in; noise_out <= noise; antiNoise_out <= antiNoise;
-            AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
-            if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
+            AntiNoiseAdapt_d1 <= AntiNoiseAdapt;
+            if enable = '1' then AntiNoiseAdapt <= PPF_negative; else AntiNoiseAdapt <= (others => '0'); end if;
             if trainingMode = '1' then antiNoise <= trainingNoise; else antiNoise <= antiNoiseAdapt; end if;
             if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_sum; end if;    
         end if;
     end process;
    
-    TRAINING_ADAPT_SEQUENCING : process(clk_anc)
+    TRAIN_ADAPT_SEQUENCING : process(clk_anc)
     begin
         if rising_edge(clk_anc) then
             if stim_count < 100001 then
@@ -93,109 +99,54 @@ begin
         end if;
     end process;
     
---    ANC_CONTROLLER : process(clk_anc)
---    begin
---        if rising_edge(clk_anc) then
---            ENTITY_SIGNAL_BUFFERS :
---                refMic <= refMic_in; errMic <= errMic_in; noise_out <= noise; antiNoise_out <= antiNoise;
---            ANTINOISE_BUFFER :
---                AntiNoiseAdaptDelayed <= AntiNoiseAdapt;
---            TRAIN_ADAPT_SEQUENCE : 
---                if reset = '1' then
---                    stim_count <= 0;
---                elsif stim_count < 100001 then
---                    stim_count <= stim_count + 1; --625, 200000
---                    if stim_count > 625 AND stim_count < 100000 then adapt <= '1'; else adapt <= '0'; end if;
---                    if stim_count < 100000 then trainingMode <= '1'; else trainingMode <= '0'; end if;
---                end if;
---           SIGNAL_ROUTING :
---                if enable = '1' then AntiNoiseAdapt <= ANC_FilterOut_Negative; else AntiNoiseAdapt <= (others => '0'); end if;
---                if trainingMode = '1' then antiNoise <= trainingNoise; else antiNoise <= antiNoiseAdapt; end if;
---                if trainingMode = '1' then noise <= (others => '0'); else noise <= sine_sum; end if; 
---        end if;
---    end process;
+    AF_REF_SUM <= std_logic_vector( signed(refMic) - signed(AFF_output) );
+    PPF_negative <= std_logic_vector( -signed(PPF_output) );
     
-    AF_REF_SUM <= std_logic_vector( signed(refMic) - signed(AF_FilterOut) );
-    ANC_FilterOut_Negative <= std_logic_vector( -signed(ANC_FilterOut) );
+	PRIMARY_SOUND_PATH : entity work.primary_path
+	generic map(L => 128)
+	port map(
+		clk_anc => clk_anc,
+		clk_dsp => clk_dsp,
+		reset => reset,
+		enable => PPA_en,
+		filt_input => AF_REF_SUM,
+		filt_output => PPF_output,
+		algo_input => SPF_output,
+		algo_error => errMic,
+		algo_adapt => PPA_adapt
+	);
+	   PPA_adapt <= (NOT trainingMode) AND enable;
+	
+	SECONDARY_SOUND_PATH : entity work.secondary_path
+	generic map(L => 64)
+	port map(
+		clk_anc => clk_anc,
+		clk_dsp => clk_dsp,
+		reset => reset,
+		enable => SPA_en,
+		algo_input => trainingNoise,
+		algo_desired => errMic,
+		algo_adapt => SPA_adapt,
+		filt_input => AF_REF_SUM,
+		filt_output => SPF_output
+	);
+	   SPA_adapt <= trainingMode;
     
-    SP_FILTER : entity work.Discrete_FIR_Filter
-    generic map(L => 24)
-    port map(
-        clk_anc => clk_anc,
-        clk_dsp => clk_dsp,
-        reset => reset,
-        enb => SP_en,
-        input => AF_REF_SUM,
-        coeff => Wsp,
-        output => SP_FilterOut
-    );
-        SP_en <= '1';
-        
-    ANC_FILTER : entity work.Discrete_FIR_Filter
-    generic map(L => 48)
-    port map(
-        clk_anc => clk_anc,
-        clk_dsp => clk_dsp,
-        reset => reset,
-        enb => ANC_en,
-        input => AF_REF_SUM,
-        coeff => Wanc,
-        output => ANC_FilterOut
-    );
-        ANC_en <= '1';
-        
-    AF_FILTER : entity work.Discrete_FIR_Filter
-    generic map(L => 24)
-    port map(
-        clk_anc => clk_anc,
-        clk_dsp => clk_dsp,
-        reset => reset,
-        enb => AF_en,
-        input => antiNoiseAdaptDelayed,
-        coeff => Waf,
-        output => AF_FilterOut
-    );
-        AF_en <= '1';
-        
-    LMS_UPDATE : entity work.LMS_Update
-    generic map(L => 48)
-    port map(
-        clk_anc => clk_anc,
-        clk_dsp => clk_dsp,
-        reset => reset,
-        enb => LMSU_en,
-        X => SP_FilterOut,
-        E => errMic,
-        adapt => LMSU_adapt,
-        W => Wanc
-    );
-        LMSU_adapt <= (NOT trainingMode) AND enable;
-        LMSU_en <= LMSU_adapt;
-    
-    SP_ESTIMATOR : entity work.LMS_Filter_24
-    port map(
-        clk => clk_anc,
-        reset => reset,
-        clk_enable => SPE_en,
-        input => trainingNoise,
-        desired => errMic,
-        adapt => adapt,
-        weights => Wsp
-    );
-        SPE_en <= adapt;
-    
-    AF_ESTIMATOR : entity work.LMS_Filter_24
-    port map(
-        clk => clk_anc,
-        reset => reset,
-        clk_enable => AFE_en,
-        input => trainingNoise,
-        desired => refMic,
-        adapt => adapt,
-        weights => Waf
-    );
-        AFE_en <= adapt;
-        
+	ACOUSTIC_FEEDBACK_SOUND_PATH : entity work.secondary_path
+	generic map(L => 64)
+	port map(
+		clk_anc => clk_anc,
+		clk_dsp => clk_dsp,
+		reset => reset,
+		enable => AFA_en,
+		algo_input => trainingNoise,
+		algo_desired => refMic,
+		algo_adapt => AFA_adapt,
+		filt_input => AF_REF_SUM,
+		filt_output => AFF_output
+	);
+	   AFA_adapt <= trainingMode;
+	
     TRAINING_NOISE : entity work.PRBS
     port map(clk => clk_22Khz, rst => reset, ce => rand_en, rand => rand_out);
     rand_en <= '1';
@@ -212,12 +163,8 @@ begin
     generic map(count => 556) port map(clk_in => clk, clk_out => clk_22Khz);
     CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
-    CLK_GEN_DSP : entity work.clk_div
-    generic map(count => 24) port map(clk_in => clk, clk_out => clk_dsp);
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
---    CLK_GEN_10Khz : entity work.clk_div --10Khz drives ANC system
---    generic map(count => 12500) port map(clk_in => clk, clk_out => clk_10Khz);
     
 --    DEBUGGER_WANC : ila_0
 --    PORT MAP(
@@ -281,15 +228,15 @@ begin
 --        PROBE22 => Wanc(22),
 --        PROBE23 => Wanc(23)
 --    );
-    DEBUGGER_SIGNALS : ila_3
-    PORT MAP(
-        clk     => clk_ila,
-        probe0  => refMic,
-        probe1  => errMic,
-        probe2  => noise,
-        probe3  => antiNoise,
-        probe4  => SP_FilterOut,
-        probe5  => AF_FilterOut,
-        probe6  => ANC_FilterOut
-    );
+--    DEBUGGER_SIGNALS : ila_3
+--    PORT MAP(
+--        clk     => clk_ila,
+--        probe0  => refMic,
+--        probe1  => errMic,
+--        probe2  => noise,
+--        probe3  => antiNoise,
+--        probe4  => SP_FilterOut,
+--        probe5  => AF_FilterOut,
+--        probe6  => ANC_FilterOut
+--    );
 end rtl;

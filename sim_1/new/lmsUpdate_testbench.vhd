@@ -11,7 +11,7 @@ end lmsUpdate_testbench;
 --
 architecture Behavioral of lmsUpdate_testbench is
     signal clk_anc, clk_sine, reset, clk_enable, adapt, ce_out, enb: std_logic := '0';
-    signal sine_out, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
+    signal sine_out_1KSA, sine_out_100SA, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
     constant t1 : time := 100ns; --anc
     constant t2 : time := 10ns; --sine
         
@@ -62,11 +62,15 @@ begin
         clk => clk_sine,
         reset => reset,
         clk_enable => clk_enable,
-        Out1 => sine_out
+        Out1 => sine_out_1KSA
     );
---    TRAINING_NOISE : entity work.PRBS
---    port map(clk => clk_sine, rst => reset, ce => clk_enable, rand => rand_out);
---    rand_amp <= std_logic_vector(shift_right(signed(rand_out), 4));
+    
+    SINE_DOWNSAMPLE : process(clk_anc)
+    begin
+        if rising_edge(clk_anc)then
+            sine_out_100SA <= sine_out_1KSA;
+        end if;
+    end process;
     
     DELAY_REGISTER : process(clk_anc)
     begin
@@ -84,7 +88,7 @@ begin
         Discrete_FIR_Filter_coeff => ESP_Coeff,
         Discrete_FIR_Filter_out => ESP_FilterOut
     );
-        ESP_FilterIn <= sine_out;
+        ESP_FilterIn <= sine_out_100SA;
         ESP_en <= '1';
         ESP_Coeff(0) <= "011101110100101111000110";-- 0.466
         ESP_Coeff(1) <= "100010000111001010110000";-- 0.533
@@ -121,7 +125,7 @@ begin
         Discrete_FIR_Filter_coeff => Wanc_d1,
         Discrete_FIR_Filter_out => ANC_FilterOut
     );
-        ANC_FilterIn <= sine_out;
+        ANC_FilterIn <= sine_out_100SA;
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
         ANC_en <= '1';
         
@@ -154,7 +158,7 @@ begin
         Discrete_FIR_Filter_coeff => PRI_Coeff,
         Discrete_FIR_Filter_out => PRI_FilterOut
     );
-        PRI_FilterIn <= sine_out;
+        PRI_FilterIn <= sine_out_100SA;
         PRI_en <= '1';
         PRI_Coeff(0) <= "000011001100110011001100"; -- 0.05
         PRI_Coeff(1) <= (others => '0');

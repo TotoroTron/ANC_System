@@ -25,7 +25,7 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     
     component primary_path is
-    generic(L : integer);
+    generic(L : integer); --length
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
@@ -41,19 +41,19 @@ PACKAGE top_level_pkg IS
     end component primary_path;
     
     component secondary_path is
-        generic(L : integer);
+        generic(L : integer); --length
         port(
             clk_anc 	: in std_logic;
             clk_dsp 	: in std_logic;
             reset 		: in std_logic;
             enable 		: in std_logic;
             
-            SPE_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
-            SPE_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
-            SPE_adapt	: in std_logic; --secondary path estimator adapt
+            algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
+            algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
+            algo_adapt	: in std_logic; --secondary path estimator adapt
             
-            SPF_input	: in std_logic_vector(23 downto 0); --secondary path filter input
-            SPF_output	: out std_logic_vector(23 downto 0) --secondary path filter output
+            filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
+            filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
         );
     end component secondary_path;    
     

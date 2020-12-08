@@ -40,7 +40,8 @@ architecture rtl of top_level is
     signal refMic, errMic, refMicAmp, errMicAmp : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, resetn : std_logic;
+    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, clk_dsp, resetn : std_logic;
+    signal count : std_logic_vector(8 downto 0) := (others => '0');
 begin
     
     resetn <= NOT reset;
@@ -58,6 +59,7 @@ begin
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
+        count => count,
         
         tx_axis_s_data => antiNoiseAmp, --input
         tx_axis_s_valid => tx_valid,    --input
@@ -70,8 +72,7 @@ begin
         rx_axis_m_last => ja_rx_last,   --output
         
         tx_mclk => ja_tx_mclk,          --output
-        tx_lrck => clk_anc,          --output to ANC_SYSTEM 10Khz clk
-        --this is spaghetti code, find a more intuitive way to generate clk_anc
+        tx_lrck => ja_tx_lrck,          --output
         tx_sclk => ja_tx_sclk,          --output
         tx_sdout => ja_tx_data,         --output         
         
@@ -80,12 +81,12 @@ begin
         rx_sclk => ja_rx_sclk,          --output
         rx_sdin => ja_rx_data           --input
     );
-        ja_tx_lrck <= clk_anc; --branch-out
         
     JB_PMOD_I2S2 : entity work.axis_i2s2
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
+        count => count,
         
         tx_axis_s_data => noiseAmp,     --input
         tx_axis_s_valid => tx_valid,    --input
@@ -122,6 +123,7 @@ begin
     ANC_SYSTEM : entity work.ANC_System
     port map(
         clk => clk,
+        clk_dsp => clk_dsp,
         clk_anc => clk_anc, --10Khz
         reset => reset, --reset
         enable => enable, --ANC adapt enable
@@ -133,5 +135,10 @@ begin
     
     PMOD_CLK : clk_wiz_0
     port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
+    
+    COUNTER : process(clk_5Mhz)begin if rising_edge(clk_5Mhz) then
+    count <= std_logic_vector(signed(count) + 1); end if; end process;
+    clk_anc <= count(8);
+    clk_dsp <= count(1);
     
 end architecture rtl;
