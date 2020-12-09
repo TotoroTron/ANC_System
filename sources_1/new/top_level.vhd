@@ -42,6 +42,33 @@ architecture rtl of top_level is
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
     signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, clk_dsp, resetn : std_logic;
     signal count : std_logic_vector(8 downto 0) := (others => '0');
+    component axis_i2s2 is
+    port(
+        axis_clk : in std_logic;
+        axis_resetn : in std_logic;
+        count : in std_logic_vector(8 downto 0);
+        tx_axis_s_data : in std_logic_vector(31 downto 0);
+        tx_axis_s_valid : in std_logic;
+        tx_axis_s_ready : out std_logic;
+        tx_axis_s_last : in std_logic;
+        
+        rx_axis_m_data : out std_logic_vector(31 downto 0);
+        rx_axis_m_valid : out std_logic;
+        rx_axis_m_ready : in std_logic;
+        rx_axis_m_last : out std_logic;
+        
+        tx_mclk : out std_logic;
+        tx_lrck : out std_logic;
+        tx_sclk : out std_logic;
+        tx_sdout: out std_logic;
+
+        rx_mclk : out std_logic; 
+        rx_lrck : out std_logic;
+        rx_sclk : out std_logic;
+        rx_sdin : in std_logic
+    );
+    end component;
+    
 begin
     
     resetn <= NOT reset;
@@ -55,7 +82,7 @@ begin
     noiseAmp <= noise;
     antiNoiseAmp <= antiNoise;
     
-    JA_PMOD_I2S2 : entity work.axis_i2s2
+    JA_PMOD_I2S2 : axis_i2s2
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
@@ -82,7 +109,7 @@ begin
         rx_sdin => ja_rx_data           --input
     );
         
-    JB_PMOD_I2S2 : entity work.axis_i2s2
+    JB_PMOD_I2S2 : axis_i2s2
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
@@ -137,8 +164,8 @@ begin
     port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
     
     COUNTER : process(clk_5Mhz)begin if rising_edge(clk_5Mhz) then
-    count <= std_logic_vector(signed(count) + 1); end if; end process;
+    count <= std_logic_vector(unsigned(count) + 1); end if; end process;
     clk_anc <= count(8);
-    clk_dsp <= count(1);
+    clk_dsp <= clk_5Mhz;
     
 end architecture rtl;

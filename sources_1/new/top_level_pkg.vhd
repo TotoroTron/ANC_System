@@ -16,6 +16,7 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_std_logic_vector24 IS ARRAY (NATURAL RANGE <>) OF std_logic_vector(23 DOWNTO 0);
     TYPE vector_of_signed24 IS ARRAY (NATURAL RANGE <>) OF signed(23 DOWNTO 0);
     TYPE vector_of_signed48 IS ARRAY (NATURAL RANGE <>) OF signed(47 DOWNTO 0);
+    TYPE vector_of_signed25 IS ARRAY (NATURAL RANGE <>) OF signed(24 DOWNTO 0);
     TYPE vector_of_signed46 IS ARRAY (NATURAL RANGE <>) OF signed(45 DOWNTO 0);
     TYPE vector_of_signed49 IS ARRAY (NATURAL RANGE <>) OF signed(48 DOWNTO 0);
     TYPE vector_of_signed53 IS ARRAY (NATURAL RANGE <>) OF signed(52 DOWNTO 0);
@@ -25,7 +26,7 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     
     component primary_path is
-    generic(L : integer); --length
+    GENERIC( L : integer; W : integer); --length, width
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
@@ -41,76 +42,79 @@ PACKAGE top_level_pkg IS
     end component primary_path;
     
     component secondary_path is
-        generic(L : integer); --length
-        port(
-            clk_anc 	: in std_logic;
-            clk_dsp 	: in std_logic;
-            reset 		: in std_logic;
-            enable 		: in std_logic;
-            
-            algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
-            algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
-            algo_adapt	: in std_logic; --secondary path estimator adapt
-            
-            filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
-            filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
+    GENERIC( L : integer; W : integer); --length width
+    port(
+        clk_anc 	: in std_logic;
+        clk_dsp 	: in std_logic;
+        reset 		: in std_logic;
+        enable 		: in std_logic;
+        
+        algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
+        algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
+        algo_adapt	: in std_logic; --secondary path estimator adapt
+        
+        filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
+        filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
+    );
+    end component secondary_path;
+    
+    component LMS_Update_FSM IS
+    GENERIC( L : integer; W : integer); --length, width
+    PORT( 
+        clk_anc 	: IN  std_logic; --10Khz ANC System Clock
+        clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+        reset 		: IN  std_logic;
+        en   		: IN  std_logic;
+        input 		: IN  std_logic_vector(23 DOWNTO 0);  
+        error 		: IN  std_logic_vector(23 DOWNTO 0);  
+        Adapt       : IN  std_logic;
+        --RAM INTERFACE
+        addr 		: out std_logic_vector(7 downto 0) := (others => '0');
+        ram_en		: out std_logic := '0'; --ram clk enable
+        wr_en 		: out std_logic := '0'; --ram write enable
+        data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
+        data_out 	: out vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+        data_valid 	: out std_logic := '0'
+    );
+    end component LMS_Update_FSM;
+    
+    component LMS_Filter_FSM IS
+    GENERIC( L : integer; W : integer); --length width
+    PORT( 
+		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
+		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+        reset 		: IN  std_logic;
+        en   		: IN  std_logic;
+        input 		: IN  std_logic_vector(23 DOWNTO 0);  
+        desired		: IN  std_logic_vector(23 DOWNTO 0);  
+        Adapt       : IN  std_logic;
+		--RAM INTERFACE
+		addr 		: out std_logic_vector(7 downto 0) := (others => '0');
+		ram_en		: out std_logic := '0'; --ram clk enable
+		wr_en 		: out std_logic := '0'; --ram write enable
+		data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
+		data_out 	: out vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+		data_valid 	: out std_logic := '0'
         );
-    end component secondary_path;    
+    END component LMS_Filter_FSM;
     
-    component LMS_Update_FSM 
-	generic( L : integer); --length
-	port( 
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-        error 		: IN  std_logic_vector(23 DOWNTO 0);
-        Adapt       : IN  std_logic;
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en 		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_out 	: out std_logic_vector(23 downto 0);
-		data_valid 	: out std_logic
-    ); end component;
-    
-    component LMS_Filter_FSM 
-	generic( L : integer); --length
-	port( 
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-        desired		: IN  std_logic_vector(23 DOWNTO 0);
-        Adapt       : IN  std_logic;
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en 		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
-		data_out 	: out std_logic_vector(23 downto 0);
-		data_valid 	: out std_logic
-    ); end component;
-    
-	component Discrete_FIR_Filter_FSM
-	generic( L : integer);
+    component Discrete_FIR_Filter_FSM IS
+	GENERIC( L : integer; W : integer); --length width
 	PORT(
 		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
 		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
 		reset 		: IN  std_logic;
         en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);
-		output 		: out std_logic_vector(23 downto 0);
-		--MEMORY INTERFACE
-		addr 		: out std_logic_vector(7 downto 0);
-		ram_en 		: out std_logic;
-		wr_en		: out std_logic;
-		data_in 	: in  std_logic_vector(23 downto 0);
+        input 		: IN  std_logic_vector(23 DOWNTO 0); 
+		output 		: out std_logic_vector(23 downto 0) := (others => '0');
+		--RAM INTERFACE
+		addr 		: out std_logic_vector(7 downto 0) := (others => '0');
+		ram_en 		: out std_logic := '0';
+		wr_en		: out std_logic := '0';
+		data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
 		data_valid 	: in  std_logic
-	); end component;
+	);
+    end component Discrete_FIR_Filter_FSM;
     
     COMPONENT ILA_0
         PORT(

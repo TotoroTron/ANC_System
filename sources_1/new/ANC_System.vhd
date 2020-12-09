@@ -103,7 +103,7 @@ begin
     PPF_negative <= std_logic_vector( -signed(PPF_output) );
     
 	PRIMARY_SOUND_PATH : entity work.primary_path
-	generic map(L => 128)
+	generic map(L => 128, W => 16)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -118,7 +118,7 @@ begin
 	   PPA_adapt <= (NOT trainingMode) AND enable;
 	
 	SECONDARY_SOUND_PATH : entity work.secondary_path
-	generic map(L => 64)
+	generic map(L => 64, W => 16)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -133,7 +133,7 @@ begin
 	   SPA_adapt <= trainingMode;
     
 	ACOUSTIC_FEEDBACK_SOUND_PATH : entity work.secondary_path
-	generic map(L => 64)
+	generic map(L => 64, W => 16)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,

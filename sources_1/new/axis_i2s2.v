@@ -23,19 +23,16 @@
 
 module axis_i2s2 (
     input  wire        axis_clk, // require: approx 22.591MHz
-    input wire [8:0]   count,
     input  wire        axis_resetn,
-    
+    input  wire [8:0]  count,    
     input  wire [31:0] tx_axis_s_data,
     input  wire        tx_axis_s_valid,
     output reg         tx_axis_s_ready = 1'b0,
-    input  wire        tx_axis_s_last,
-    
+    input  wire        tx_axis_s_last,    
     output wire [31:0] rx_axis_m_data,
     output reg         rx_axis_m_valid = 1'b0,
     input  wire        rx_axis_m_ready,
-    output reg         rx_axis_m_last = 1'b0,
-    
+    output reg         rx_axis_m_last = 1'b0,    
     output wire tx_mclk, // JA[0]
     output wire tx_lrck, // JA[1]
     output wire tx_sclk, // JA[2]

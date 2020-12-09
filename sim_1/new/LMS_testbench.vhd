@@ -44,6 +44,9 @@ architecture Behavioral of LMS_testbench is
     constant t1 : time := 100ns; --anc
     constant t2 : time := 0.1ns; --dsp
     constant t3 : time := 10ns; --sine
+    CONSTANT L : integer := 24;
+    CONSTANT W : integer := 1;
+    CONSTANT R : integer := L/W; --length/width ratio
     
     signal LMS_Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
     signal FIR_Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
@@ -53,14 +56,14 @@ architecture Behavioral of LMS_testbench is
     
     signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
-	signal douta 			:	std_logic_vector(23 downto 0) := (others => '0');
-	signal doutb 			:	std_logic_vector(23 downto 0) := (others => '0');
+	signal douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+	signal doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
 	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');
 	signal addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
-	signal dina 			:	std_logic_vector(23 downto 0) := (others => '0');
-	signal dinb 			:	std_logic_vector(23 downto 0) := (others => '0');
+	signal dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+	signal dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal ena 				:	std_logic := '0';
 	signal enb 				:	std_logic := '0';
 	signal injectdbiterra	:	std_logic := '0';
@@ -143,7 +146,7 @@ begin
         adapt <= '1';
     
     LMS_FILTER_2 : entity work.LMS_Filter_FSM 
-	generic map( L => 24) --length
+	generic map(L => L, W => W)
 	port map ( 
 		clk_anc 	         => clk_anc,      
 		clk_dsp		         => clk_dsp,      
@@ -162,63 +165,195 @@ begin
     );
         --lms_data_valid <= NOT clk_anc;
 
-    WEIGHTS_STORAGE : xpm_memory_tdpram
-    generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
-        ADDR_WIDTH_B => 8, -- DECIMAL
-        AUTO_SLEEP_TIME => 0, -- DECIMAL
-        BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-        BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
-        CASCADE_HEIGHT => 0, -- DECIMAL
-        CLOCKING_MODE => "common_clock", -- String
-        ECC_MODE => "no_ecc", -- String
-        MEMORY_INIT_FILE => "none", -- String
-        MEMORY_INIT_PARAM => "0", -- String
-        MEMORY_OPTIMIZATION => "true", -- String
-        MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
-        MESSAGE_CONTROL => 0, -- DECIMAL
-        READ_DATA_WIDTH_A => 24, -- DECIMAL
-        READ_DATA_WIDTH_B => 24, -- DECIMAL
-        READ_LATENCY_A => 1, -- DECIMAL
-        READ_LATENCY_B => 1, -- DECIMAL
-        READ_RESET_VALUE_A => "0", -- String
-        READ_RESET_VALUE_B => "0", -- String
-        RST_MODE_A => "SYNC", -- String
-        RST_MODE_B => "SYNC", -- String
-        SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
-        USE_MEM_INIT => 1, -- DECIMAL
-        WAKEUP_TIME => "disable_sleep", -- String
-        WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-        WRITE_DATA_WIDTH_B => 24, -- DECIMAL
-        WRITE_MODE_A => "no_change", -- String
-        WRITE_MODE_B => "no_change" -- String
-    ) port map (
-        dbiterra => dbiterra, --unused
-        dbiterrb => dbiterrb, --unused
-        douta => douta,
-        doutb => doutb,
-        sbiterra => sbiterra, --unused
-        sbiterrb => sbiterrb, --unused
-        addra => addra,
-        addrb => addrb,
-        clka => clk_dsp,
-        clkb => clk_dsp,
-        dina => dina,
-        dinb => dinb, --unused
-        ena => ena,
-        enb => enb,
-        injectdbiterra => injectdbiterra, --unused
-        injectdbiterrb => injectdbiterrb, --unused
-        injectsbiterra => injectsbiterra, --unused
-        injectsbiterrb => injectsbiterrb, --unused
-        regcea => regcea, --unused
-        regceb => regceb, --unused
-        rsta => reset,
-        rstb => reset,
-        sleep => sleep, --unused
-        wea => wea,
-        web => web
-    );
+     --xpm_memory_tdpram: True Dual Port RAM
+     --Xilinx Parameterized Macro, version 2019.2
+    GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
+        WEIGHTS_STORAGE : xpm_memory_tdpram
+        generic map (
+            ADDR_WIDTH_A => 8, -- DECIMAL
+            ADDR_WIDTH_B => 8, -- DECIMAL
+            AUTO_SLEEP_TIME => 0, -- DECIMAL
+            BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+            BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
+            CASCADE_HEIGHT => 0, -- DECIMAL
+            CLOCKING_MODE => "common_clock", -- String
+            ECC_MODE => "no_ecc", -- String
+            MEMORY_INIT_FILE => "none", -- String
+            MEMORY_INIT_PARAM => "0", -- String
+            MEMORY_OPTIMIZATION => "true", -- String
+            MEMORY_PRIMITIVE => "auto", -- String
+            MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
+            MESSAGE_CONTROL => 0, -- DECIMAL
+            READ_DATA_WIDTH_A => 24, -- DECIMAL
+            READ_DATA_WIDTH_B => 24, -- DECIMAL
+            READ_LATENCY_A => 1, -- DECIMAL
+            READ_LATENCY_B => 1, -- DECIMAL
+            READ_RESET_VALUE_A => "0", -- String
+            READ_RESET_VALUE_B => "0", -- String
+            RST_MODE_A => "SYNC", -- String
+            RST_MODE_B => "SYNC", -- String
+            SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+            USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
+            USE_MEM_INIT => 1, -- DECIMAL
+            WAKEUP_TIME => "disable_sleep", -- String
+            WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+            WRITE_DATA_WIDTH_B => 24, -- DECIMAL
+            WRITE_MODE_A => "no_change", -- String
+            WRITE_MODE_B => "no_change" -- String
+         )
+        port map (
+            dbiterra => dbiterra, --unused
+            dbiterrb => dbiterrb, --unused
+            douta => douta(i),
+            doutb => doutb(i),
+            sbiterra => sbiterra, --unused
+            sbiterrb => sbiterrb, --unused
+            addra => addra,
+            addrb => addrb,
+            clka => clk_dsp,
+            clkb => clk_dsp,
+            dina => dina(i),
+            dinb => dinb(i), --unused
+            ena => ena,
+            enb => enb,
+            injectdbiterra => injectdbiterra, --unused
+            injectdbiterrb => injectdbiterrb, --unused
+            injectsbiterra => injectsbiterra, --unused
+            injectsbiterrb => injectsbiterrb, --unused
+            regcea => regcea, --unused
+            regceb => regceb, --unused
+            rsta => reset,
+            rstb => reset,
+            sleep => sleep, --unused
+            wea => wea,
+            web => web
+        );
+        -- End of xpm_memory_tdpram_inst instantiation
+    end generate GEN_WEIGHTS_STORAGE;
+    
+--        WEIGHTS_STORAGE : xpm_memory_tdpram
+--        generic map (
+--            ADDR_WIDTH_A => 8, -- DECIMAL
+--            ADDR_WIDTH_B => 8, -- DECIMAL
+--            AUTO_SLEEP_TIME => 0, -- DECIMAL
+--            BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+--            BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
+--            CASCADE_HEIGHT => 0, -- DECIMAL
+--            CLOCKING_MODE => "common_clock", -- String
+--            ECC_MODE => "no_ecc", -- String
+--            MEMORY_INIT_FILE => "none", -- String
+--            MEMORY_INIT_PARAM => "0", -- String
+--            MEMORY_OPTIMIZATION => "true", -- String
+--            MEMORY_PRIMITIVE => "auto", -- String
+--            MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
+--            MESSAGE_CONTROL => 0, -- DECIMAL
+--            READ_DATA_WIDTH_A => 24, -- DECIMAL
+--            READ_DATA_WIDTH_B => 24, -- DECIMAL
+--            READ_LATENCY_A => 1, -- DECIMAL
+--            READ_LATENCY_B => 1, -- DECIMAL
+--            READ_RESET_VALUE_A => "0", -- String
+--            READ_RESET_VALUE_B => "0", -- String
+--            RST_MODE_A => "SYNC", -- String
+--            RST_MODE_B => "SYNC", -- String
+--            SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+--            USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
+--            USE_MEM_INIT => 1, -- DECIMAL
+--            WAKEUP_TIME => "disable_sleep", -- String
+--            WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+--            WRITE_DATA_WIDTH_B => 24, -- DECIMAL
+--            WRITE_MODE_A => "no_change", -- String
+--            WRITE_MODE_B => "no_change" -- String
+--         )
+--        port map (
+--            dbiterra => dbiterra, --unused
+--            dbiterrb => dbiterrb, --unused
+--            douta => douta(0),
+--            doutb => doutb(0),
+--            sbiterra => sbiterra, --unused
+--            sbiterrb => sbiterrb, --unused
+--            addra => addra,
+--            addrb => addrb,
+--            clka => clk_dsp,
+--            clkb => clk_dsp,
+--            dina => dina(0),
+--            dinb => dinb(0), --unused
+--            ena => ena,
+--            enb => enb,
+--            injectdbiterra => injectdbiterra, --unused
+--            injectdbiterrb => injectdbiterrb, --unused
+--            injectsbiterra => injectsbiterra, --unused
+--            injectsbiterrb => injectsbiterrb, --unused
+--            regcea => regcea, --unused
+--            regceb => regceb, --unused
+--            rsta => reset,
+--            rstb => reset,
+--            sleep => sleep, --unused
+--            wea => wea,
+--            web => web
+--        );
+--        -- End of xpm_memory_tdpram_inst instantiation
+        
+
+--        WEIGHTS_STORAGE_1 : xpm_memory_tdpram
+--        generic map (
+--            ADDR_WIDTH_A => 8, -- DECIMAL
+--            ADDR_WIDTH_B => 8, -- DECIMAL
+--            AUTO_SLEEP_TIME => 0, -- DECIMAL
+--            BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+--            BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
+--            CASCADE_HEIGHT => 0, -- DECIMAL
+--            CLOCKING_MODE => "common_clock", -- String
+--            ECC_MODE => "no_ecc", -- String
+--            MEMORY_INIT_FILE => "none", -- String
+--            MEMORY_INIT_PARAM => "0", -- String
+--            MEMORY_OPTIMIZATION => "true", -- String
+--            MEMORY_PRIMITIVE => "auto", -- String
+--            MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
+--            MESSAGE_CONTROL => 0, -- DECIMAL
+--            READ_DATA_WIDTH_A => 24, -- DECIMAL
+--            READ_DATA_WIDTH_B => 24, -- DECIMAL
+--            READ_LATENCY_A => 1, -- DECIMAL
+--            READ_LATENCY_B => 1, -- DECIMAL
+--            READ_RESET_VALUE_A => "0", -- String
+--            READ_RESET_VALUE_B => "0", -- String
+--            RST_MODE_A => "SYNC", -- String
+--            RST_MODE_B => "SYNC", -- String
+--            SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+--            USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
+--            USE_MEM_INIT => 1, -- DECIMAL
+--            WAKEUP_TIME => "disable_sleep", -- String
+--            WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+--            WRITE_DATA_WIDTH_B => 24, -- DECIMAL
+--            WRITE_MODE_A => "no_change", -- String
+--            WRITE_MODE_B => "no_change" -- String
+--         )
+--        port map (
+--            dbiterra => dbiterra, --unused
+--            dbiterrb => dbiterrb, --unused
+--            douta => douta(1),
+--            doutb => doutb(1),
+--            sbiterra => sbiterra, --unused
+--            sbiterrb => sbiterrb, --unused
+--            addra => addra,
+--            addrb => addrb,
+--            clka => clk_dsp,
+--            clkb => clk_dsp,
+--            dina => dina(1),
+--            dinb => dinb(1), --unused
+--            ena => ena,
+--            enb => enb,
+--            injectdbiterra => injectdbiterra, --unused
+--            injectdbiterrb => injectdbiterrb, --unused
+--            injectsbiterra => injectsbiterra, --unused
+--            injectsbiterrb => injectsbiterrb, --unused
+--            regcea => regcea, --unused
+--            regceb => regceb, --unused
+--            rsta => reset,
+--            rstb => reset,
+--            sleep => sleep, --unused
+--            wea => wea,
+--            web => web
+--        );
+--        -- End of xpm_memory_tdpram_inst instantiation
+    
 end Behavioral;
