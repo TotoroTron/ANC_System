@@ -8,6 +8,7 @@ ENTITY LMS_Update_FSM IS
     PORT( 
         clk_anc 	: IN  std_logic; --10Khz ANC System Clock
         clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
+        clk_ila     : in std_logic;
         reset 		: IN  std_logic;
         en   		: IN  std_logic;
         input 		: IN  std_logic_vector(23 DOWNTO 0);  

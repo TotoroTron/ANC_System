@@ -23,3 +23,24 @@ begin
     end process;
     clk_out <= clk_tmp;
 end Behavioral;
+
+architecture short_pulse of clk_div is
+begin
+    process(clk_in)
+        variable counter : integer range 0 to count := 0;
+    begin
+        if rising_edge(clk_in) then
+            if counter = 0 then
+                clk_out <= '1';
+                counter := counter + 1;
+            elsif counter = count-1 then
+                clk_out <= '0';
+                counter := 0;
+            else
+                clk_out <= '0';
+                counter := counter + 1;
+            end if;
+        end if;
+    end process;
+
+end short_pulse;

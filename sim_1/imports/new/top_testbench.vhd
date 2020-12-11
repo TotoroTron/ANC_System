@@ -32,9 +32,9 @@ begin
 
     UUT: entity work.top_level
     port map(
-        clk  => clk, 
-        reset        => reset, 
-        enable         => enable,
+        clk         => clk, 
+        reset       => reset, 
+        enable      => enable,
          
 		ja_tx_mclk  => ja_tx_mclk,    
 		ja_tx_lrck  => ja_tx_lrck,    

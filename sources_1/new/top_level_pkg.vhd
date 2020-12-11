@@ -25,112 +25,21 @@ PACKAGE top_level_pkg IS
     TYPE vector_of_signed72 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     TYPE vector_of_signed73 IS ARRAY (NATURAL RANGE <>) OF signed(31 DOWNTO 0);
     
-    component primary_path is
-    GENERIC( L : integer; W : integer); --length, width
-	port(
-		clk_anc 	: in std_logic;
-		clk_dsp 	: in std_logic;
-		reset 		: in std_logic;
-		enable 		: in std_logic;
-		
-		filt_input 	: in std_logic_vector(23 downto 0);
-		filt_output : out std_logic_vector(23 downto 0);
-		algo_input 	: in std_logic_vector(23 downto 0);
-		algo_error 	: in std_logic_vector(23 downto 0);
-		algo_adapt 	: in std_logic
-	);
-    end component primary_path;
-    
-    component secondary_path is
-    GENERIC( L : integer; W : integer); --length width
-    port(
-        clk_anc 	: in std_logic;
-        clk_dsp 	: in std_logic;
-        reset 		: in std_logic;
-        enable 		: in std_logic;
-        
-        algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
-        algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
-        algo_adapt	: in std_logic; --secondary path estimator adapt
-        
-        filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
-        filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
-    );
-    end component secondary_path;
-    
-    component LMS_Update_FSM IS
-    GENERIC( L : integer; W : integer); --length, width
-    PORT( 
-        clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-        clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);  
-        error 		: IN  std_logic_vector(23 DOWNTO 0);  
-        Adapt       : IN  std_logic;
-        --RAM INTERFACE
-        addr 		: out std_logic_vector(7 downto 0) := (others => '0');
-        ram_en		: out std_logic := '0'; --ram clk enable
-        wr_en 		: out std_logic := '0'; --ram write enable
-        data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
-        data_out 	: out vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-        data_valid 	: out std_logic := '0'
-    );
-    end component LMS_Update_FSM;
-    
-    component LMS_Filter_FSM IS
-    GENERIC( L : integer; W : integer); --length width
-    PORT( 
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-        reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0);  
-        desired		: IN  std_logic_vector(23 DOWNTO 0);  
-        Adapt       : IN  std_logic;
-		--RAM INTERFACE
-		addr 		: out std_logic_vector(7 downto 0) := (others => '0');
-		ram_en		: out std_logic := '0'; --ram clk enable
-		wr_en 		: out std_logic := '0'; --ram write enable
-		data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
-		data_out 	: out vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-		data_valid 	: out std_logic := '0'
-        );
-    END component LMS_Filter_FSM;
-    
-    component Discrete_FIR_Filter_FSM IS
-	GENERIC( L : integer; W : integer); --length width
-	PORT(
-		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
-		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
-		reset 		: IN  std_logic;
-        en   		: IN  std_logic;
-        input 		: IN  std_logic_vector(23 DOWNTO 0); 
-		output 		: out std_logic_vector(23 downto 0) := (others => '0');
-		--RAM INTERFACE
-		addr 		: out std_logic_vector(7 downto 0) := (others => '0');
-		ram_en 		: out std_logic := '0';
-		wr_en		: out std_logic := '0';
-		data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
-		data_valid 	: in  std_logic
-	);
-    end component Discrete_FIR_Filter_FSM;
-    
     COMPONENT ILA_0
         PORT(
             CLK         : IN STD_LOGIC;
-            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE10     : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE11     : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
+            PROBE0      : IN STD_LOGIC;
+            PROBE1      : IN STD_LOGIC;
+            PROBE2      : IN STD_LOGIC;
+            PROBE3      : IN STD_LOGIC;
+            PROBE4      : IN STD_LOGIC;
+            PROBE5      : IN STD_LOGIC;
+            PROBE6      : IN STD_LOGIC;
+            PROBE7      : IN STD_LOGIC;
+            PROBE8      : IN STD_LOGIC;
+            PROBE9      : IN STD_LOGIC;
+            PROBE10     : IN STD_LOGIC_vector(23 downto 0);
+            PROBE11     : IN STD_LOGIC_vector(23 downto 0)
         );
     END COMPONENT;
     COMPONENT ILA_1
@@ -138,47 +47,11 @@ PACKAGE top_level_pkg IS
             CLK         : IN STD_LOGIC;
             PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE10     : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE11     : IN STD_LOGIC_VECTOR(23 DOWNTO 0)
+            PROBE2      : IN STD_LOGIC;
+            PROBE3      : IN STD_LOGIC
         );
     END COMPONENT;
-    COMPONENT ILA_2
-        PORT(
-            CLK         : IN STD_LOGIC;
-            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE10      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE11      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE12      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE13      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE14      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE15      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE16      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE17      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE18      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE19      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE20      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE21      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE22      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);                                                                                    
-            PROBE23      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)            
-        );
-    END COMPONENT;
+
     COMPONENT ILA_3
         PORT(
             CLK         : IN STD_LOGIC;
@@ -191,6 +64,35 @@ PACKAGE top_level_pkg IS
             PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)       
         );
     END COMPONENT;
+    --    COMPONENT ILA_2
+--        PORT(
+--            CLK         : IN STD_LOGIC;
+--            PROBE0      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE1      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE2      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE8      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE9      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE10      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE11      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE12      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE13      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE14      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE15      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE16      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE17      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE18      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE19      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE20      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE21      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+--            PROBE22      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);                                                                                    
+--            PROBE23      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)            
+--        );
+--    END COMPONENT;
     component clk_wiz_0
         port(
             clk_in1 : in std_logic;

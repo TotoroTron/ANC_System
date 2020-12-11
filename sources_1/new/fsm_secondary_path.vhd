@@ -5,18 +5,19 @@ USE work.top_level_pkg.ALL;
 
 Library xpm;
 use xpm.vcomponents.all;
+
 entity secondary_path is
     GENERIC( L : integer; W : integer); --length width
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
+		clk_ila     : in std_logic;
 		reset 		: in std_logic;
-		enable 		: in std_logic;
-		
+		algo_enable : in std_logic;
 		algo_input 	: in std_logic_vector(23 downto 0); --secondary path estimator input
 		algo_desired : in std_logic_vector(23 downto 0); --secondary path estimator desired
 		algo_adapt	: in std_logic; --secondary path estimator adapt
-		
+		filt_enable : in std_logic;
 		filt_input	: in std_logic_vector(23 downto 0); --secondary path filter input
 		filt_output	: out std_logic_vector(23 downto 0) --secondary path filter output
 	);
@@ -53,8 +54,9 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
+	clk_ila    => clk_ila,
 	reset 		=> reset,
-	en			=> enable,
+	en			=> algo_enable,
 	input		=> algo_input,
 	desired		=> algo_desired,
 	adapt		=> algo_adapt,
@@ -72,8 +74,9 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
+	clk_ila    => clk_ila,
 	reset 		=> reset,
-	en			=> enable,
+	en			=> filt_enable,
 	input		=> filt_input,
 	output		=> filt_output,
 	--ram interface
@@ -148,5 +151,4 @@ GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
     );
     -- End of xpm_memory_tdpram_inst instantiation
 end generate;
-
 end architecture;

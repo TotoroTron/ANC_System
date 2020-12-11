@@ -11,11 +11,13 @@ entity primary_path is
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
+		clk_ila   : in std_logic;
 		reset 		: in std_logic;
-		enable 		: in std_logic;
 		
+		filt_enable : in std_logic;
 		filt_input 	: in std_logic_vector(23 downto 0);
 		filt_output : out std_logic_vector(23 downto 0);
+		algo_enable : in std_logic;
 		algo_input 	: in std_logic_vector(23 downto 0);
 		algo_error 	: in std_logic_vector(23 downto 0);
 		algo_adapt 	: in std_logic
@@ -46,16 +48,16 @@ architecture rtl of primary_path is
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
 	signal lms_data_valid	:	std_logic := '0';
-	
 begin
 
-LMS_UPDATE : entity work.LMS_UPDATE_FSM
+LMS_UPDATE : entity work.LMS_Update_FSM
 generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
+	clk_ila     => clk_ila,
 	reset 		=> reset,
-	en			=> enable,
+	en			=> algo_enable,
 	input		=> algo_input,
 	error		=> algo_error,
 	adapt		=> algo_adapt,
@@ -73,8 +75,9 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
+	clk_ila    => clk_ila,
 	reset 		=> reset,
-	en			=> enable,
+	en			=> filt_enable,
 	input		=> filt_input,
 	output		=> filt_output,
 	--ram interface
@@ -85,7 +88,7 @@ port map(
 	data_valid	=> lms_data_valid
 );
 
- -- xpm_memory_tdpram: True Dual Port RAM
+-- xpm_memory_tdpram: True Dual Port RAM
 -- Xilinx Parameterized Macro, version 2019.2
 GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
     WEIGHTS_STORAGE : xpm_memory_tdpram
@@ -120,7 +123,7 @@ GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
         WRITE_DATA_WIDTH_B => 24, -- DECIMAL
         WRITE_MODE_A => "no_change", -- String
         WRITE_MODE_B => "no_change" -- String
-     ) port map (
+    ) port map (
         dbiterra => dbiterra, --unused
         dbiterrb => dbiterrb, --unused
         douta => douta(i),

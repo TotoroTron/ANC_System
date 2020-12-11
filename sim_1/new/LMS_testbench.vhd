@@ -40,7 +40,13 @@ entity LMS_testbench is
 end LMS_testbench;
 
 architecture Behavioral of LMS_testbench is
-    signal clk_anc, clk_dsp, clk_sine, reset, clk_enable, ce_out, LMS_ceout, adapt : std_logic := '0';
+    signal clk_anc : std_logic := '0';
+    signal clk_dsp : std_logic := '0';
+    signal clk_sine : std_logic := '0';
+    signal clk_ila : std_logic := '0';
+    signal reset : std_logic := '0';
+    signal clk_enable : std_logic := '0';
+    signal adapt : std_logic := '0';
     constant t1 : time := 100ns; --anc
     constant t2 : time := 0.1ns; --dsp
     constant t3 : time := 10ns; --sine
@@ -150,6 +156,7 @@ begin
 	port map ( 
 		clk_anc 	         => clk_anc,      
 		clk_dsp		         => clk_dsp,      
+		clk_ila              => clk_ila,
         reset 		         => reset,      
         en   		         => clk_enable,      
         input 		         => fir_out,      

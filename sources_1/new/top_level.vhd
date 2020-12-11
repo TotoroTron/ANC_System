@@ -40,13 +40,13 @@ architecture rtl of top_level is
     signal refMic, errMic, refMicAmp, errMicAmp : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, clk_dsp, resetn : std_logic;
-    signal count : std_logic_vector(8 downto 0) := (others => '0');
+    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, clk_dsp, resetn : std_logic := '0';
+    signal count : unsigned(8 downto 0) := (others => '0');
     component axis_i2s2 is
     port(
         axis_clk : in std_logic;
         axis_resetn : in std_logic;
-        count : in std_logic_vector(8 downto 0);
+        count : in unsigned(8 downto 0);
         tx_axis_s_data : in std_logic_vector(31 downto 0);
         tx_axis_s_valid : in std_logic;
         tx_axis_s_ready : out std_logic;
@@ -162,10 +162,14 @@ begin
     
     PMOD_CLK : clk_wiz_0
     port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
-    
-    COUNTER : process(clk_5Mhz)begin if rising_edge(clk_5Mhz) then
-    count <= std_logic_vector(unsigned(count) + 1); end if; end process;
-    clk_anc <= count(8);
+    COUNTER : process(clk_5Mhz)begin
+    if rising_edge(clk_5Mhz) then
+    count <= count + 1; end if;
+    end process;
     clk_dsp <= clk_5Mhz;
+    clk_anc <= count(8);
+    
+--    CLK_DIV_ANC : entity work.clk_div(short_pulse)
+--    generic map( count => 1024 ) port map( clk_in => clk_5Mhz, clk_out => clk_anc);
     
 end architecture rtl;
