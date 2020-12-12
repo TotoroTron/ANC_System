@@ -11,6 +11,7 @@ entity lms_update_fsm_testbench is
 end lms_update_fsm_testbench;
 --
 architecture Behavioral of lms_update_fsm_testbench is
+    signal clk, clk_5Mhz : std_logic;
     signal clk_dsp : std_logic := '0';
     signal clk_anc: std_logic := '0';
     signal clk_ila : std_logic := '0';
@@ -22,7 +23,9 @@ architecture Behavioral of lms_update_fsm_testbench is
     signal enable: std_logic := '0';
     signal clk_div_out : std_logic := '0';
     signal clk_41Khz : std_logic:='0';
-    signal sine_out, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
+    signal sine_out, sine_out_ds, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
+    signal count : unsigned(8 downto 0) := (others => '0');
+    
     constant t1 : time := 8ns;
     
     CONSTANT L : integer := 12;
@@ -72,24 +75,8 @@ architecture Behavioral of lms_update_fsm_testbench is
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
 	signal lms_data_valid	:	std_logic := '0';
-	
-	signal clk, clk_5Mhz : std_logic;
 begin
 
-    PMOD_CLK : clk_wiz_0
-    port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
-    
-    CLK_DIV_ANC : entity work.clk_div(short_pulse)
-    generic map( count => 1024 ) port map( clk_in => clk_dsp, clk_out => clk_div_out);
-
-    SINE_WAVE_150 : entity work.sine_generator(amplitude_25) --150Hz sine output, 1K sample period
-    port map(clk => clk_41Khz, reset => reset, clk_enable => SINE_en, Out1 => sine_out);
-    SINE_en <= '1';
-    CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
-    generic map(count => 834) port map(clk_in => clk, clk_out => clk_41Khz);
-    
-    reset <= '0'; clk_enable <= '1';
-    
     CLOCK_ANC : process
     begin
         clk <= '0';
@@ -97,23 +84,26 @@ begin
         clk <= '1';
         wait for t1/2;
     end process;
-    
-    SINE : entity work.sine_generator(amplitude_15) --1000 samples/period
-    port map(
-        clk => clk_sine, --
-        reset => reset,
-        clk_enable => clk_enable,
-        Out1 => sine_out
-    );
-    
-    STIM_PROC: process
-    begin
-        for i in 0 to 200 loop
-            wait until rising_edge(clk_anc);
-        end loop;
-        adapt <= '1';
-        
+
+    SINE_WAVE_150 : entity work.sine_generator(amplitude_25) --150Hz sine output, 1K sample period
+    port map(clk => clk_sine, reset => reset, clk_enable => sine_en, Out1 => sine_out);
+    SINE_en <= '1';
+    SINE_BUFFER : process(clk_anc) begin
+        if rising_edge(clk_anc) then
+            sine_out_ds <= sine_out;
+        end if;
     end process;
+    PMOD_CLK : clk_wiz_0
+    port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
+    COUNTER : process(clk_5Mhz)begin
+        if rising_edge(clk_5Mhz) then
+            count <= count + 1;
+        end if;
+    end process;
+    clk_dsp <= clk_5Mhz;
+    clk_anc <= count(8);
+    CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
+    generic map(count => 834) port map(clk_in => clk, clk_out => clk_sine);
     
     PRIMARY_SOUND_PATH : entity work.primary_path
     generic map(L => L, W => W)
@@ -130,7 +120,7 @@ begin
 		algo_error 	=> LMSU_error,
 		algo_adapt 	=> adapt
 	);
-        ANC_FilterIn <= sine_out;
+        ANC_FilterIn <= sine_out_ds;
         ANC_FilterOut_inv <= std_logic_vector(-signed(ANC_FilterOut));
         LMSU_input <= ESP_FilterOut;
         LMSU_error <= summation;
@@ -175,7 +165,7 @@ port map(
 	data_valid	=> lms_data_valid
 );
     lms_data_valid <= NOT clk_anc;
-    ESP_FilterIn <= sine_out;
+    ESP_FilterIn <= sine_out_ds;
     ESP_en <= '1';
     
 -- xpm_memory_tdpram: True Dual Port RAM
@@ -272,7 +262,7 @@ end generate;
         Discrete_FIR_Filter_coeff => PRI_Coeff,
         Discrete_FIR_Filter_out => PRI_FilterOut
     );
-        PRI_FilterIn <= sine_out;
+        PRI_FilterIn <= sine_out_ds;
         PRI_en <= '1';
         PRI_Coeff(0) <= "000011001100110011001100"; -- 0.05
         PRI_Coeff(1) <= (others => '0');

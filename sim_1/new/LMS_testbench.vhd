@@ -40,16 +40,23 @@ entity LMS_testbench is
 end LMS_testbench;
 
 architecture Behavioral of LMS_testbench is
-    signal clk_anc : std_logic := '0';
+    signal clk, clk_5Mhz : std_logic := '0';
     signal clk_dsp : std_logic := '0';
-    signal clk_sine : std_logic := '0';
+    signal clk_anc: std_logic := '0';
     signal clk_ila : std_logic := '0';
+    signal clk_sine : std_logic := '0';
+    signal sine_en : std_logic := '0';
     signal reset : std_logic := '0';
-    signal clk_enable : std_logic := '0';
-    signal adapt : std_logic := '0';
-    constant t1 : time := 100ns; --anc
-    constant t2 : time := 0.1ns; --dsp
-    constant t3 : time := 10ns; --sine
+    signal clk_enable: std_logic := '0';
+    signal adapt: std_logic := '0';
+    signal enable: std_logic := '0';
+    signal clk_div_out : std_logic := '0';
+    signal clk_41Khz : std_logic:='0';
+    signal sine_out, sine_out_ds, rand_out, rand_amp : std_logic_vector(23 downto 0) := (others => '0');
+    signal count : unsigned(8 downto 0) := (others => '0');
+    
+    constant t1 : time := 8ns;
+    
     CONSTANT L : integer := 24;
     CONSTANT W : integer := 1;
     CONSTANT R : integer := L/W; --length/width ratio
@@ -84,60 +91,47 @@ architecture Behavioral of LMS_testbench is
 	signal lms_data_valid	:	std_logic := '0';
 begin
 
-    CLOCK_ANC: process
+    CLOCK_ANC : process
     begin
-        clk_anc <= '0';
+        clk <= '0';
         wait for t1/2;
-        clk_anc <= '1';
+        clk <= '1';
         wait for t1/2;
     end process;
-    CLOCK_DSP: process
-    begin
-        clk_dsp <= '0';
-        wait for t2/2;
-        clk_dsp <= '1';
-        wait for t2/2;
-    end process;
-    CLOCK_SINE: process
-    begin
-        clk_sine <= '0';
-        wait for t3/2;
-        clk_sine <= '1';
-        wait for t3/2;
-    end process;
-    
-    SINE_DOWNSAMPLE : process(clk_anc)
-    begin
-        if rising_edge(clk_anc)then
-            sine_out_100SA <= sine_out_1KSA;
+
+    SINE_WAVE_150 : entity work.sine_generator(amplitude_25) --150Hz sine output, 1K sample period
+    port map(clk => clk_sine, reset => reset, clk_enable => sine_en, Out1 => sine_out);
+    SINE_en <= '1';
+    SINE_BUFFER : process(clk_anc) begin
+        if rising_edge(clk_anc) then
+            sine_out_ds <= sine_out;
         end if;
     end process;
+    PMOD_CLK : clk_wiz_0
+    port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
+    COUNTER : process(clk_5Mhz)begin
+        if rising_edge(clk_5Mhz) then
+            count <= count + 1;
+        end if;
+    end process;
+    clk_dsp <= clk_5Mhz;
+    clk_anc <= count(8);
+    CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
+    generic map(count => 834) port map(clk_in => clk, clk_out => clk_sine);
     
     reset <= '0'; clk_enable <= '1';
-    
-    SINE_GEN : entity work.sine_generator(amplitude_15)
-    port map(
-        clk => clk_sine,
-        reset => reset,
-        clk_enable => clk_enable,
-        Out1 => sine_out_1KSA
-    );
     
     FIR_FILTER : entity work.Discrete_FIR_Filter_24
     port map(
         clk => clk_anc,
         reset => reset,
         enb => clk_enable,
-        Discrete_FIR_Filter_In => sine_out_100SA,
+        Discrete_FIR_Filter_In => sine_out_ds,
         Discrete_FIR_Filter_Coeff => FIR_Coeff,
         Discrete_FIR_Filter_Out => fir_out
     );
         FIR_Coeff(10) <= X"400000";
         FIR_Coeff(11) <= X"400000";
---        FIR_Coeff(0) <= X"400000"; -- 0.25
---        FIR_Coeff(1) <= X"C00000"; -- -0.25
---        FIR_Coeff(2) <= X"200000"; -- 0.125
---        FIR_Coeff(3) <= X"E00000"; -- -0.125
         
     LMS_FILTER_1 : entity work.LMS_Filter_24
     port map(
@@ -145,7 +139,7 @@ begin
         reset => reset,
         clk_enable => clk_enable,
         input => fir_out,
-        desired => sine_out_100SA,
+        desired => sine_out_ds,
         adapt => adapt,
         weights => LMS_Coeff
     );
@@ -160,7 +154,7 @@ begin
         reset 		         => reset,      
         en   		         => clk_enable,      
         input 		         => fir_out,      
-        desired		         => sine_out_100SA,      
+        desired		         => sine_out_ds,      
         Adapt                => adapt,      
 		--MEMORY INTERFACE
 		addr 		         => addra,      
@@ -237,130 +231,5 @@ begin
         );
         -- End of xpm_memory_tdpram_inst instantiation
     end generate GEN_WEIGHTS_STORAGE;
-    
---        WEIGHTS_STORAGE : xpm_memory_tdpram
---        generic map (
---            ADDR_WIDTH_A => 8, -- DECIMAL
---            ADDR_WIDTH_B => 8, -- DECIMAL
---            AUTO_SLEEP_TIME => 0, -- DECIMAL
---            BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
---            BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
---            CASCADE_HEIGHT => 0, -- DECIMAL
---            CLOCKING_MODE => "common_clock", -- String
---            ECC_MODE => "no_ecc", -- String
---            MEMORY_INIT_FILE => "none", -- String
---            MEMORY_INIT_PARAM => "0", -- String
---            MEMORY_OPTIMIZATION => "true", -- String
---            MEMORY_PRIMITIVE => "auto", -- String
---            MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
---            MESSAGE_CONTROL => 0, -- DECIMAL
---            READ_DATA_WIDTH_A => 24, -- DECIMAL
---            READ_DATA_WIDTH_B => 24, -- DECIMAL
---            READ_LATENCY_A => 1, -- DECIMAL
---            READ_LATENCY_B => 1, -- DECIMAL
---            READ_RESET_VALUE_A => "0", -- String
---            READ_RESET_VALUE_B => "0", -- String
---            RST_MODE_A => "SYNC", -- String
---            RST_MODE_B => "SYNC", -- String
---            SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
---            USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
---            USE_MEM_INIT => 1, -- DECIMAL
---            WAKEUP_TIME => "disable_sleep", -- String
---            WRITE_DATA_WIDTH_A => 24, -- DECIMAL
---            WRITE_DATA_WIDTH_B => 24, -- DECIMAL
---            WRITE_MODE_A => "no_change", -- String
---            WRITE_MODE_B => "no_change" -- String
---         )
---        port map (
---            dbiterra => dbiterra, --unused
---            dbiterrb => dbiterrb, --unused
---            douta => douta(0),
---            doutb => doutb(0),
---            sbiterra => sbiterra, --unused
---            sbiterrb => sbiterrb, --unused
---            addra => addra,
---            addrb => addrb,
---            clka => clk_dsp,
---            clkb => clk_dsp,
---            dina => dina(0),
---            dinb => dinb(0), --unused
---            ena => ena,
---            enb => enb,
---            injectdbiterra => injectdbiterra, --unused
---            injectdbiterrb => injectdbiterrb, --unused
---            injectsbiterra => injectsbiterra, --unused
---            injectsbiterrb => injectsbiterrb, --unused
---            regcea => regcea, --unused
---            regceb => regceb, --unused
---            rsta => reset,
---            rstb => reset,
---            sleep => sleep, --unused
---            wea => wea,
---            web => web
---        );
---        -- End of xpm_memory_tdpram_inst instantiation
-        
 
---        WEIGHTS_STORAGE_1 : xpm_memory_tdpram
---        generic map (
---            ADDR_WIDTH_A => 8, -- DECIMAL
---            ADDR_WIDTH_B => 8, -- DECIMAL
---            AUTO_SLEEP_TIME => 0, -- DECIMAL
---            BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
---            BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
---            CASCADE_HEIGHT => 0, -- DECIMAL
---            CLOCKING_MODE => "common_clock", -- String
---            ECC_MODE => "no_ecc", -- String
---            MEMORY_INIT_FILE => "none", -- String
---            MEMORY_INIT_PARAM => "0", -- String
---            MEMORY_OPTIMIZATION => "true", -- String
---            MEMORY_PRIMITIVE => "auto", -- String
---            MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
---            MESSAGE_CONTROL => 0, -- DECIMAL
---            READ_DATA_WIDTH_A => 24, -- DECIMAL
---            READ_DATA_WIDTH_B => 24, -- DECIMAL
---            READ_LATENCY_A => 1, -- DECIMAL
---            READ_LATENCY_B => 1, -- DECIMAL
---            READ_RESET_VALUE_A => "0", -- String
---            READ_RESET_VALUE_B => "0", -- String
---            RST_MODE_A => "SYNC", -- String
---            RST_MODE_B => "SYNC", -- String
---            SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
---            USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
---            USE_MEM_INIT => 1, -- DECIMAL
---            WAKEUP_TIME => "disable_sleep", -- String
---            WRITE_DATA_WIDTH_A => 24, -- DECIMAL
---            WRITE_DATA_WIDTH_B => 24, -- DECIMAL
---            WRITE_MODE_A => "no_change", -- String
---            WRITE_MODE_B => "no_change" -- String
---         )
---        port map (
---            dbiterra => dbiterra, --unused
---            dbiterrb => dbiterrb, --unused
---            douta => douta(1),
---            doutb => doutb(1),
---            sbiterra => sbiterra, --unused
---            sbiterrb => sbiterrb, --unused
---            addra => addra,
---            addrb => addrb,
---            clka => clk_dsp,
---            clkb => clk_dsp,
---            dina => dina(1),
---            dinb => dinb(1), --unused
---            ena => ena,
---            enb => enb,
---            injectdbiterra => injectdbiterra, --unused
---            injectdbiterrb => injectdbiterrb, --unused
---            injectsbiterra => injectsbiterra, --unused
---            injectsbiterrb => injectsbiterrb, --unused
---            regcea => regcea, --unused
---            regceb => regceb, --unused
---            rsta => reset,
---            rstb => reset,
---            sleep => sleep, --unused
---            wea => wea,
---            web => web
---        );
---        -- End of xpm_memory_tdpram_inst instantiation
-    
 end Behavioral;

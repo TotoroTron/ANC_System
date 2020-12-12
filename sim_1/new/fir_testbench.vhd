@@ -123,25 +123,20 @@ begin
     SINE_WAVE_150 : entity work.sine_generator(amplitude_25) --150Hz sine output, 1K sample period
     port map(clk => clk_sine, reset => reset, clk_enable => sine_en, Out1 => sine_out);
     SINE_en <= '1';
-
     SINE_BUFFER : process(clk_anc) begin
         if rising_edge(clk_anc) then
             sine_out_ds <= sine_out;
         end if;
     end process;
-    
     PMOD_CLK : clk_wiz_0
     port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
-    
     COUNTER : process(clk_5Mhz)begin
         if rising_edge(clk_5Mhz) then
             count <= count + 1;
         end if;
     end process;
-    
     clk_dsp <= clk_5Mhz;
     clk_anc <= count(8);
-    
     CLK_GEN_41Khz : entity work.clk_div --15Khz drives 150Hz sine
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_sine);
     
