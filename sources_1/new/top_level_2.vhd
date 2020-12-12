@@ -203,15 +203,6 @@ begin
 --    CLK_DIV_ANC : entity work.clk_div(short_pulse)
 --    generic map( count => 1024 ) port map( clk_in => clk_5Mhz, clk_out => clk_anc);
     
-    DEBUG_SIGNALS_1 : ila_1
-    PORT MAP(
-        clk     => clk_dsp,
-        probe0  => refMic(23 downto 0),
-        probe1  => EXTRA_FilterOut,
-        probe2 => gnd,
-        probe3 => gnd
-    );
-    
     EXTRA_FILTER : entity work.Discrete_FIR_Filter_FSM
     generic map(L => L, W => W)
     port map(

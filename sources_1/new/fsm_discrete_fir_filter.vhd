@@ -52,28 +52,28 @@ BEGIN
         probe6 => state_v(4),
         probe7 => data_valid,
         probe8 => ram_en,
-        probe9 => wr_en,
+        probe9 => idle,
         probe10 => s_addr_v,
         probe11=> data_in(0)
     );
-	
-    DEBUG_FIR_BUFFER_1 : ila_3
-    PORT MAP(
-        clk     => clk_dsp,
-        probe0  => std_logic_vector(input_buffer(0)),
-        probe1  => std_logic_vector(input_buffer(1)),
-        probe2  => std_logic_vector(input_buffer(2)),
-        probe3  => std_logic_vector(input_buffer(3)),
-        probe4  => std_logic_vector(input_buffer(4)),
-        probe5  => std_logic_vector(input_buffer(5)),
-        probe6  => std_logic_vector(input_buffer(6))
-    );
-	   s_addr_v <= X"0000" & std_logic_vector(s_addr);
+       s_addr_v <= X"0000" & std_logic_vector(s_addr);
+--    DEBUG_FIR_BUFFER_1 : ila_3
+--    PORT MAP(
+--        clk     => clk_dsp,
+--        probe0  => std_logic_vector(input_buffer(0)),
+--        probe1  => std_logic_vector(input_buffer(1)),
+--        probe2  => std_logic_vector(input_buffer(2)),
+--        probe3  => std_logic_vector(input_buffer(3)),
+--        probe4  => std_logic_vector(input_buffer(4)),
+--        probe5  => std_logic_vector(input_buffer(5)),
+--        probe6  => std_logic_vector(input_buffer(6))
+--    );
+
 	
 	input_signed <= signed(input);
 	addr <= std_logic_vector(s_addr);
 	
-	SAMPLES_REGISTER : PROCESS (clk_anc)
+	SAMPLES_REGISTER : PROCESS (clk_anc, reset, en)
 	BEGIN
 	IF rising_edge(clk_anc) THEN
 		IF reset = '1' THEN
@@ -85,11 +85,13 @@ BEGIN
 	END IF;
 	END PROCESS SAMPLES_REGISTER;
 	
-	DSP_STATE_REGISTER : PROCESS(clk_dsp)
+	DSP_STATE_REGISTER : PROCESS(clk_dsp, reset, en)
 	BEGIN
 	IF rising_edge(clk_dsp) THEN
 		IF reset = '1' THEN
 			STATE <= S0;
+			idle <= '1';
+			s_addr <= (others => '0');
 		ELSIF en = '1' THEN
 			STATE <= NEXT_STATE;
 			idle <= next_idle;
@@ -98,25 +100,27 @@ BEGIN
 	END IF;
 	END PROCESS;
 	
-    DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, idle, s_addr)
+    DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, idle, s_addr, data_in)
         variable weight_in 	    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable mult			: vector_of_signed48(0 to W-1) := (others => (others => '0'));
         variable mult_cast	    : vector_of_signed53(0 to W-1) := (others => (others => '0'));
         variable accumulator	: signed(52 downto 0) := (others => '0');
     BEGIN
+        next_idle <= idle;
+        s_next_addr <= s_addr;
         CASE STATE IS
         WHEN S0 => --initial state
             state_v <= "00001";
             ram_en <= '0'; wr_en <= '0';
             s_next_addr <= (others => '0');
             accumulator := (others => '0');
-            IF clk_anc = '1' THEN
-                next_idle <= '1';
-                NEXT_STATE <= S0;
-            ELSIF clk_anc = '0' AND idle = '1' THEN
-                next_idle <= '0';
+            NEXT_STATE <= S0;
+            IF CLK_ANC = '1' THEN
+                NEXT_IDLE <= '1';
+            ELSIF CLK_ANC = '0' AND IDLE = '1' THEN
+                NEXT_IDLE <= '0';
                 NEXT_STATE <= S1;
-            END IF;
+            END IF; 
         WHEN S1 => --initiate read from memory (read latency = 1)
         state_v <= "00010";
             ram_en <= '1'; wr_en <= '0';
