@@ -4,7 +4,7 @@ USE IEEE.numeric_std.ALL;
 USE work.top_level_pkg.ALL;
 
 ENTITY LMS_Filter_FSM IS
-  GENERIC( L : integer := 24; W : integer := 2); --length, width
+  GENERIC( L : integer := 128; W : integer := 8); --length, width
   PORT( 
 		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
 		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
@@ -35,11 +35,11 @@ ARCHITECTURE Behavioral OF LMS_Filter_FSM IS
 	SIGNAL input_buffer         : vector_of_signed24(0 TO L-1) := (others => (others => '0'));
 	SIGNAL s_addr				: unsigned(7 downto 0) := (others => '0');
 	SIGNAL s_next_addr	        : unsigned(7 downto 0) := (others => '0');
-	signal idle : std_logic := '0';
-	signal next_idle : std_logic := '0';
-    signal s_sum               : signed(52 downto 0) := (others => '0');
-	signal s_next_sum          : signed(52 downto 0) := (others => '0');
-	signal accu_cast : signed(23 downto 0) := (others => '0');
+	signal idle                 : std_logic := '0';
+	signal next_idle            : std_logic := '0';
+    signal s_sum                : signed(52 downto 0) := (others => '0');
+	signal s_next_sum           : signed(52 downto 0) := (others => '0');
+	signal accu_cast            : signed(23 downto 0) := (others => '0');
 BEGIN
 	
 	input_signed <= signed(input);
@@ -80,7 +80,9 @@ BEGIN
     DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, idle, s_addr, data_in, input_buffer)
         variable weight_in 		: vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
-        variable mu             : signed(23 downto 0) := "010000000000000000000000";
+        variable mu             : signed(23 downto 0) := "010000000000000000000000"; --0.25
+        variable leak           : signed(24 downto 0) := "0111111111111111111100000"; --0.9834375
+        variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated
         variable mu_err_in     	: vector_of_signed48(0 to W-1) := (others => (others => '0')); --mu * error * input
@@ -101,7 +103,8 @@ BEGIN
         weight_in := (others => (others => '0'));
         mult := (others => (others => '0'));
         mult_cast := (others => (others => '0'));
-        accumulator := (others => '0');    
+        accumulator := (others => '0');
+        leak_w := (others => (others => '0'));
         mu_err := (others => '0');
         mu_err_cast := (others => '0');      
         mu_err_in := (others => (others => '0'));
@@ -169,7 +172,9 @@ BEGIN
             
             if adapt = '1' then
                 for i in 0 to W-1 loop
-                weight_out(i)	:= resize(weight_in(i), 25) + resize(mu_err_in_cast(i), 25); --w(n) = w(n-1) + mu*e(n)*u(n)
+                leak_w(i) := leak * resize(weight_in(i),25);
+                weight_out(i) := leak_w(i)(48 downto 24) + resize(mu_err_in_cast(i),25);
+                --weight_out(i)	:= resize(weight_in(i), 25) + resize(mu_err_in_cast(i), 25); --w(n) = w(n-1) + mu*e(n)*u(n)
                 end loop;
             else
                 for i in 0 to W-1 loop 

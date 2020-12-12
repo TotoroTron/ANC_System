@@ -64,7 +64,7 @@ architecture Behavioral of LMS_testbench is
     signal LMS_Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
     signal FIR_Coeff : vector_of_std_logic_vector24(0 to 23) := (others => (others => '0'));
     
-    signal sine_out_1KSA, sine_out_100SA, fir_out : std_logic_vector(23 downto 0) := (others => '0');
+    signal fir_out : std_logic_vector(23 downto 0) := (others => '0');
     signal tmp : std_logic_vector(23 downto 0) := (others => '0');
     
     signal dbiterra 		: 	std_logic := '0';

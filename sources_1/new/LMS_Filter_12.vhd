@@ -42,12 +42,12 @@ USE IEEE.numeric_std.ALL;
 USE work.top_level_pkg.ALL;
 
 ENTITY LMS_Filter_12 IS
-  PORT( clk                               :   IN    std_logic;
-        reset                             :   IN    std_logic;
-        clk_enable                        :   IN    std_logic;
-        input                             :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
-        desired                           :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
-        adapt                             :   IN    std_logic;
+  PORT( clk          :   IN    std_logic;
+        reset        :   IN    std_logic;
+        clk_enable   :   IN    std_logic;
+        input        :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
+        desired      :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
+        adapt        :   IN    std_logic;
 --        ce_out                            :   OUT   std_logic;
 --        output                            :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
 --        error_rsvd                        :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24

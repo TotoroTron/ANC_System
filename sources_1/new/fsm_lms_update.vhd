@@ -76,7 +76,9 @@ BEGIN
     DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, adapt, idle, s_addr, data_in, error_signed, input_buffer)
         variable weight_in 		: vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
-        variable mu             : signed(23 downto 0) := "010000000000000000000000";
+        variable leak           : signed(24 downto 0) := "0111111000000000000000000"; --0.9834375
+        variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
+        variable mu             : signed(23 downto 0) := "010000000000000000000000"; --0.25
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated 
         variable mult           : vector_of_signed48(0 to W-1) := (others => (others => '0')); --product of mu_error and weight_in
@@ -88,6 +90,7 @@ BEGIN
         weight_in := (others => (others => '0'));
         mult := (others => (others => '0'));
         mult_cast := (others => (others => '0'));
+        leak_w := (others => (others => '0'));
         mu_err := (others => '0');
         mu_err_cast := (others => '0');
         
@@ -122,7 +125,9 @@ BEGIN
             
             if adapt = '1' then
                 for i in 0 to W-1 loop
-                weight_out(i) := resize(mult_cast(i),25) + resize(weight_in(i),25);
+                leak_w(i) := leak * resize(weight_in(i),25);
+                weight_out(i) := leak_w(i)(48 downto 24) + resize(mult_cast(i),25);
+                --weight_out(i) := resize(weight_in(i),25) + resize(mult_cast(i),25);
                 end loop;
             else
                 for i in 0 to W-1 loop
