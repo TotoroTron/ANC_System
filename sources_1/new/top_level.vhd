@@ -74,11 +74,11 @@ begin
     resetn <= NOT reset;
 --    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
 --    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 2)); --amplify 4x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 2)); --amplify 4x
+--    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 2)); --amplify 4x
+--    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 2)); --amplify 4x
     
---    errMicAmp <= errMic;
---    refMicAmp <= refMic;
+    errMicAmp <= errMic;
+    refMicAmp <= refMic;
     noiseAmp <= noise;
     antiNoiseAmp <= antiNoise;
     

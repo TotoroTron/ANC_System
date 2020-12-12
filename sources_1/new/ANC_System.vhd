@@ -74,11 +74,6 @@ architecture rtl of ANC_System is
     --acoustic feedback algorithm
     signal AFA_en : std_logic := '0';
     signal AFA_adapt : std_logic := '0';
-    
-    CONSTANT L : INTEGER := 64;
-    CONSTANT W : INTEGER := 8;
-    CONSTANT R : INTEGER := L/W;
-
 begin
 
     SIGNAL_ROUTING_BUFFERS : process(clk_anc)
@@ -133,7 +128,7 @@ begin
     PPF_negative <= std_logic_vector( - signed(PPF_output) );
     
 	PRIMARY_SOUND_PATH : entity work.primary_path
-	generic map(L => 64, W => 4)
+	generic map(L => 256, W => 16)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -150,7 +145,7 @@ begin
 	   PPA_adapt <= (NOT trainingMode) AND enable;
 	
 	SECONDARY_SOUND_PATH : entity work.secondary_path
-	generic map(L => 32, W => 4)
+	generic map(L => 128, W => 8)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -167,7 +162,7 @@ begin
 	   SPA_adapt <= trainingMode;
     
 	ACOUSTIC_FEEDBACK_SOUND_PATH : entity work.secondary_path
-	generic map(L => 32, W => 4)
+	generic map(L => 128, W => 8)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -186,7 +181,7 @@ begin
     TRAINING_NOISE : entity work.PRBS
     port map(clk => clk_22Khz, rst => reset, ce => rand_en, rand => rand_out);
     rand_en <= '1';
-    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 2)); --divide 4x
+    trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 6)); --divide 64x
 
     SINE_WAVE_225 : entity work.sine_generator(amplitude_15) --225Hz sine output
     port map(clk => clk_22Khz, reset => reset, clk_enable => SINE_en, Out1 => sine_out_225Hz);
@@ -202,7 +197,7 @@ begin
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
     
-    DEBUG_SIGNALS_1 : ila_3
+    EBUG_SIGNALS_1 : ila_3
     PORT MAP(
         clk     => clk_ila,
         probe0  => refMic,

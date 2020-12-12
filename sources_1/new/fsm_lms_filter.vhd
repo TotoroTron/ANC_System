@@ -80,7 +80,7 @@ BEGIN
     DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, idle, s_addr, data_in, input_buffer)
         variable weight_in 		: vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
-        variable mu             : signed(23 downto 0) := "001000000000000000000000";
+        variable mu             : signed(23 downto 0) := "010000000000000000000000";
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated
         variable mu_err_in     	: vector_of_signed48(0 to W-1) := (others => (others => '0')); --mu * error * input
