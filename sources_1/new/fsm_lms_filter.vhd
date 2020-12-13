@@ -80,8 +80,8 @@ BEGIN
     DSP_STATE_MACHINE : PROCESS(STATE, clk_anc, idle, s_addr, data_in, input_buffer)
         variable weight_in 		: vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
-        variable mu             : signed(23 downto 0) := "010000000000000000000000"; --0.25
-        variable leak           : signed(24 downto 0) := "0111111111111111111100000"; --0.9834375
+        variable mu             : signed(23 downto 0) := "010000000000000000000000"; --fixpt24fr24 = 0.25
+        variable leak           : signed(24 downto 0) := "0111111111111111111101110"; --fixpt25fr24 = 0.999998927116394
         variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated
@@ -173,7 +173,7 @@ BEGIN
             if adapt = '1' then
                 for i in 0 to W-1 loop
                 leak_w(i) := leak * resize(weight_in(i),25);
-                weight_out(i) := leak_w(i)(48 downto 24) + resize(mu_err_in_cast(i),25);
+                weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mu_err_in_cast(i),25);
                 --weight_out(i)	:= resize(weight_in(i), 25) + resize(mu_err_in_cast(i), 25); --w(n) = w(n-1) + mu*e(n)*u(n)
                 end loop;
             else

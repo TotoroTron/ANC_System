@@ -89,8 +89,13 @@ architecture Behavioral of LMS_testbench is
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
 	signal lms_data_valid	:	std_logic := '0';
+	signal leak : signed(24 downto 0) := "0111111111111111111101110";
+	signal input : signed(23 downto 0) := ('0','1',others => '0');
+	signal prod : signed(49 downto 0);
+	signal prod_cast : signed(23 downto 0);
 begin
-
+    prod <= leak * resize(input,25);
+    prod_cast <= prod(47 downto 24);
     CLOCK_ANC : process
     begin
         clk <= '0';
