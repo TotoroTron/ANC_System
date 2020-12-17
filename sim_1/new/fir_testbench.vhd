@@ -47,8 +47,8 @@ architecture Behavioral of fir_testbench is
     signal sine_out, sine_out_ds : std_logic_vector(23 downto 0) := (others => '0');
     signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal count : unsigned(8 downto 0) := (others => '0');
-    CONSTANT L : integer    := 8;
-    CONSTANT W : integer    := 2; --width
+    CONSTANT L : integer    := 12;
+    CONSTANT W : integer    := 1; --width
 	CONSTANT R : integer    := L/W; --length/width ratio
     signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
@@ -106,15 +106,15 @@ begin
     
     STIMULUS : PROCESS
     BEGIN
-        ENABLE <= '0';
-        FOR I IN 1 TO 4 LOOP
-        WAIT UNTIL RISING_EDGE(CLK_ANC);
-        END LOOP;
+--        ENABLE <= '0';
+--        FOR I IN 1 TO 4 LOOP
+--        WAIT UNTIL RISING_EDGE(CLK_ANC);
+--        END LOOP;
         ENABLE <= '1';
-        FOR I IN 1 TO 4 LOOP
-        WAIT UNTIL RISING_EDGE(CLK_ANC);
-        END LOOP;
-        ENABLE <= '0';        
+--        FOR I IN 1 TO 4 LOOP
+--        WAIT UNTIL RISING_EDGE(CLK_ANC);
+--        END LOOP;
+--        ENABLE <= '0';        
         WAIT;
     END PROCESS;
     
@@ -160,10 +160,10 @@ begin
         input		=> fir2_in,
         output		=> fir2_out,
         --ram interface
-        addr		=> addrb1,
-        ram_en		=> enb1,
-        wr_en		=> web1(0),
-        data_in		=> doutb1
+        wt_addr		=> addrb1,
+        wt_ram_en		=> enb1,
+        wt_wr_en		=> web1(0),
+        wt_data_in		=> doutb1
     );   
         fir2_in <= sine_out_ds;  
         

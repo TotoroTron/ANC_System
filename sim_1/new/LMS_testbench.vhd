@@ -161,11 +161,11 @@ begin
         desired		         => sine_out_ds,      
         Adapt                => adapt,      
 		--MEMORY INTERFACE
-		addr 		         => addra,      
-		ram_en 		         => ena,      
-		wr_en 		         => wea(0),      
-		data_in 	         => douta,      
-		data_out 	         => dina  
+		wt_addr 		         => addra,      
+		wt_ram_en 		         => ena,      
+		wt_wr_en 		         => wea(0),      
+		wt_data_in 	         => douta,      
+		wt_data_out 	         => dina  
     );
         --lms_data_valid <= NOT clk_anc;
 

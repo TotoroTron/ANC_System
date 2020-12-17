@@ -158,10 +158,10 @@ port map(
 	input		=> ESP_FilterIn,
 	output		=> ESP_FilterOut,
 	--ram interface
-	addr		=> esp_addrb,
-	ram_en		=> esp_enb,
-	wr_en		=> esp_web(0),
-	data_in		=> esp_doutb
+	wt_addr		=> esp_addrb,
+	wt_ram_en		=> esp_enb,
+	wt_wr_en		=> esp_web(0),
+	wt_data_in		=> esp_doutb
 );
     ESP_FilterIn <= sine_out_ds;
     ESP_en <= '1';
@@ -242,10 +242,10 @@ port map(
 	input		=> SP_FilterIn,
 	output		=> SP_FilterOut,
 	--ram interface
-	addr		=> sp_addrb,
-	ram_en		=> sp_enb,
-	wr_en		=> sp_web(0),
-	data_in		=> sp_doutb
+	wt_addr		=> sp_addrb,
+	wt_ram_en		=> sp_enb,
+	wt_wr_en		=> sp_web(0),
+	wt_data_in		=> sp_doutb
 );
     SP_FilterIn <= ANC_FilterOut_inv;
     SP_en <= '1';
@@ -326,10 +326,10 @@ port map(
 	input		=> PRI_FilterIn,
 	output		=> PRI_FilterOut,
 	--ram interface
-	addr		=> pri_addrb,
-	ram_en		=> pri_enb,
-	wr_en		=> pri_web(0),
-	data_in		=> pri_doutb
+	wt_addr		=> pri_addrb,
+	wt_ram_en		=> pri_enb,
+	wt_wr_en		=> pri_web(0),
+	wt_data_in		=> pri_doutb
 );
     PRI_FilterIn <= sine_out_ds;
     PRI_en <= '1';
