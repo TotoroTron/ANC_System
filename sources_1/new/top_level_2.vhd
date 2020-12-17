@@ -214,11 +214,10 @@ begin
         input		=> refMic(23 downto 0),
         output		=> EXTRA_FilterOut,
         --ram interface
-        addr		=> addrb,
-        ram_en		=> enb,
-        wr_en		=> web(0),
-        data_in		=> doutb,
-        data_valid	=> lms_data_valid
+        wt_addr		=> addrb,
+        wt_ram_en		=> enb,
+        wt_wr_en		=> web(0),
+        wt_data_in		=> doutb
     );
         lms_data_valid <= NOT clk_anc;
 

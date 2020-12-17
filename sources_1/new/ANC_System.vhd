@@ -52,7 +52,7 @@ architecture rtl of ANC_System is
     signal trainingNoise, sine_out_225Hz, sine_out_150Hz, sine_sum, rand_out: std_logic_vector(23 downto 0) := (others => '0');
     signal SINE_en, rand_en : std_logic := '0';
     
-    signal stim_count : integer range 0 to 1000000 := 0;
+    signal stim_count : integer range 0 to 10000000 := 0;
     
     --secondary path filter
     signal SPF_en : std_logic := '0';
@@ -128,7 +128,7 @@ begin
     PPF_negative <= std_logic_vector( - signed(PPF_output) );
     
 	PRIMARY_SOUND_PATH : entity work.primary_path
-	generic map(L => 256, W => 16)
+	generic map(L => 384, W => 16)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -197,16 +197,16 @@ begin
     CLK_GEN_ILA : entity work.clk_div --375Khz drives ILA debugger. clock must be >2.5x JTAG clk
     generic map(count => 334) port map(clk_in => clk, clk_out => clk_ila);
     
-    EBUG_SIGNALS_1 : ila_3
-    PORT MAP(
-        clk     => clk_ila,
-        probe0  => refMic,
-        probe1  => errMic,
-        probe2  => noise,
-        probe3  => antiNoise,
-        probe4  => SPF_output, --secondary path filter out
-        probe5  => AFF_output, --acoustic feedback filter out
-        probe6  => PPF_output --primary path filter out
-    );
+--    DEBUG_SIGNALS_1 : ila_3
+--    PORT MAP(
+--        clk     => clk_ila,
+--        probe0  => refMic,
+--        probe1  => errMic,
+--        probe2  => noise,
+--        probe3  => antiNoise,
+--        probe4  => trainingNoise, --secondary path filter out
+--        probe5  => AFF_output, --acoustic feedback filter out
+--        probe6  => PPF_output --primary path filter out
+--    );
     
 end rtl;

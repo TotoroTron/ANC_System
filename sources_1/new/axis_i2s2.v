@@ -22,7 +22,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module axis_i2s2 (
-    input  wire        axis_clk, // require: approx 22.591MHz
+    input  wire        axis_clk,
     input  wire        axis_resetn,
     input  wire [8:0]  count,    
     input  wire [31:0] tx_axis_s_data,

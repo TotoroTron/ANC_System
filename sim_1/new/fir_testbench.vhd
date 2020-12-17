@@ -47,8 +47,8 @@ architecture Behavioral of fir_testbench is
     signal sine_out, sine_out_ds : std_logic_vector(23 downto 0) := (others => '0');
     signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal count : unsigned(8 downto 0) := (others => '0');
-    CONSTANT L : integer    := 12;
-    CONSTANT W : integer    := 1; --width
+    CONSTANT L : integer    := 8;
+    CONSTANT W : integer    := 2; --width
 	CONSTANT R : integer    := L/W; --length/width ratio
     signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
@@ -81,8 +81,6 @@ architecture Behavioral of fir_testbench is
 	signal web1 			:	std_logic_vector(0 downto 0) := "0";
     signal wea2 			:	std_logic_vector(0 downto 0) := "0";
 	signal web2 			:	std_logic_vector(0 downto 0) := "0";
-	signal lms_data_valid1	:	std_logic := '0';
-    signal lms_data_valid2	:	std_logic := '0';
 begin
 
         Coeff(0) <= X"100000"; -- 0.25
@@ -165,8 +163,7 @@ begin
         addr		=> addrb1,
         ram_en		=> enb1,
         wr_en		=> web1(0),
-        data_in		=> doutb1,
-        data_valid	=> lms_data_valid1
+        data_in		=> doutb1
     );   
         fir2_in <= sine_out_ds;  
         

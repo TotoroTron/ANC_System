@@ -109,6 +109,7 @@ BEGIN
       ELSIF enb = '1' THEN
         delay_pipeline_1(0) <= Discrete_FIR_Filter_in_signed;
         delay_pipeline_1(1 TO 10) <= delay_pipeline_1(0 TO 9);
+        
       END IF;
     END IF;
   END PROCESS Delay_Pipeline_process;

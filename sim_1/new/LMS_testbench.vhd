@@ -88,7 +88,6 @@ architecture Behavioral of LMS_testbench is
 	signal sleep 			:	std_logic := '0';
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
-	signal lms_data_valid	:	std_logic := '0';
 	signal leak : signed(24 downto 0) := "0111111111111111111101110";
 	signal input : signed(23 downto 0) := ('0','1',others => '0');
 	signal prod : signed(49 downto 0);
@@ -166,8 +165,7 @@ begin
 		ram_en 		         => ena,      
 		wr_en 		         => wea(0),      
 		data_in 	         => douta,      
-		data_out 	         => dina,      
-		data_valid 	         => lms_data_valid      
+		data_out 	         => dina  
     );
         --lms_data_valid <= NOT clk_anc;
 

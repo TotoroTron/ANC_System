@@ -14,6 +14,7 @@ USE IEEE.numeric_std.ALL;
 
 PACKAGE top_level_pkg IS
     TYPE vector_of_std_logic_vector24 IS ARRAY (NATURAL RANGE <>) OF std_logic_vector(23 DOWNTO 0);
+    TYPE vector_of_std_logic_vector48 IS ARRAY (NATURAL RANGE <>) OF std_logic_vector(47 DOWNTO 0);
     TYPE vector_of_signed24 IS ARRAY (NATURAL RANGE <>) OF signed(23 DOWNTO 0);
     TYPE vector_of_signed48 IS ARRAY (NATURAL RANGE <>) OF signed(47 DOWNTO 0);
     TYPE vector_of_signed25 IS ARRAY (NATURAL RANGE <>) OF signed(24 DOWNTO 0);

@@ -40,8 +40,13 @@ architecture rtl of top_level is
     signal refMic, errMic, refMicAmp, errMicAmp : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_5Mhz, clk_44Khz, clk_22Khz, clk_41Khz, clk_ila, clk_anc, clk_dsp, resetn : std_logic := '0';
-    signal count : unsigned(8 downto 0) := (others => '0');
+    signal clk_5Mhz : std_logic := '0';
+    signal clk_20Mhz : std_logic := '0';
+    signal clk_ila : std_logic := '0'; --clock integrated logic analyzer
+    signal clk_anc : std_logic := '0'; --clock active noise control
+    signal clk_dsp : std_logic := '0'; --clock digital signal processing
+    signal resetn : std_logic := '0';
+    signal count : unsigned(8 downto 0) := (others => '0'); --clock divider counter
     component axis_i2s2 is
     port(
         axis_clk : in std_logic;
@@ -70,16 +75,14 @@ architecture rtl of top_level is
     end component;
     
 begin
-    
     resetn <= NOT reset;
-    
+
 --    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
 --    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 1)); --amplify 2x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify 2x
-    
---    errMicAmp <= errMic;
---    refMicAmp <= refMic;
+--    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 1)); --amplify 2x
+--    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify 2x
+    errMicAmp <= errMic;
+    refMicAmp <= refMic;
     noiseAmp <= noise;
     antiNoiseAmp <= antiNoise;
     
@@ -162,15 +165,13 @@ begin
     );
     
     PMOD_CLK : clk_wiz_0
-    port map(clk_in1 => clk, clk_out1 => clk_5Mhz);
-    COUNTER : process(clk_5Mhz)begin
+    port map(clk_in1 => clk, clk_out1 => clk_5Mhz); --20.48Mhz, 50% duty
+    COUNTER : process(clk_5Mhz) begin --clock divider counter
     if rising_edge(clk_5Mhz) then
     count <= count + 1; end if;
     end process;
     clk_dsp <= clk_5Mhz;
-    clk_anc <= count(8);
-    
---    CLK_DIV_ANC : entity work.clk_div(short_pulse)
---    generic map( count => 1024 ) port map( clk_in => clk_5Mhz, clk_out => clk_anc);
+    --clk_5Mhz <= count(2); --5.12Mhz
+    clk_anc <= count(8); --10Khz
     
 end architecture rtl;

@@ -46,7 +46,6 @@ architecture rtl of secondary_path is
 	signal sleep 			:	std_logic := '0';
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
-	signal lms_data_valid	:	std_logic := '0';
 begin
 
 LMS_FILTER : entity work.LMS_Filter_FSM
@@ -61,12 +60,11 @@ port map(
 	desired		=> algo_desired,
 	adapt		=> algo_adapt,
 	--ram interface
-	addr		=> addra,
-	ram_en		=> ena,
-	wr_en		=> wea(0),
-	data_in		=> douta,
-	data_out	=> dina,
-	data_valid	=> lms_data_valid
+	wt_addr		=> addra,
+	wt_ram_en		=> ena,
+	wt_wr_en		=> wea(0),
+	wt_data_in		=> douta,
+	wt_data_out	=> dina
 );
 
 FIR_FILTER : entity work.Discrete_FIR_Filter_FSM
@@ -80,11 +78,10 @@ port map(
 	input		=> filt_input,
 	output		=> filt_output,
 	--ram interface
-	addr		=> addrb,
-	ram_en		=> enb,
-	wr_en		=> web(0),
-	data_in		=> doutb,
-	data_valid	=> lms_data_valid
+	wt_addr		=> addrb,
+	wt_ram_en		=> enb,
+	wt_wr_en		=> web(0),
+	wt_data_in		=> doutb
 );
 
 -- xpm_memory_tdpram: True Dual Port RAM

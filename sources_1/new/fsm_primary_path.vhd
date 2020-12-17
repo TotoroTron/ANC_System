@@ -30,6 +30,7 @@ architecture rtl of primary_path is
 	signal dbiterrb			:	std_logic := '0';
 	signal douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+	signal doutb_24         :   vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));	
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
 	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');
@@ -47,7 +48,7 @@ architecture rtl of primary_path is
 	signal sleep 			:	std_logic := '0';
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
-	signal lms_data_valid	:	std_logic := '0';
+	
 begin
 
 LMS_UPDATE : entity work.LMS_Update_FSM
@@ -62,12 +63,11 @@ port map(
 	error		=> algo_error,
 	adapt		=> algo_adapt,
 	--ram interface
-	addr		=> addra,
-	ram_en		=> ena,
-	wr_en		=> wea(0),
-	data_in		=> douta,
-	data_out	=> dina,
-	data_valid	=> lms_data_valid
+	wt_addr		=> addra,
+	wt_ram_en	=> ena,
+	wt_wr_en	=> wea(0),
+	wt_data_in	=> douta,
+	wt_data_out	=> dina
 );
 
 FIR_FILTER : entity work.Discrete_FIR_Filter_FSM
@@ -75,17 +75,16 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
-	clk_ila    => clk_ila,
+	clk_ila     => clk_ila,
 	reset 		=> reset,
 	en			=> filt_enable,
 	input		=> filt_input,
 	output		=> filt_output,
 	--ram interface
-	addr		=> addrb,
-	ram_en		=> enb,
-	wr_en		=> web(0),
-	data_in		=> doutb,
-	data_valid	=> lms_data_valid
+	wt_addr		=> addrb,
+	wt_ram_en	=> enb,
+	wt_wr_en	=> web(0),
+	wt_data_in	=> doutb
 );
 
 -- xpm_memory_tdpram: True Dual Port RAM
