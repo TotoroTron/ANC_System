@@ -4,7 +4,7 @@ use xpm.vcomponents.all;
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 ENTITY LMS_Update_FSM IS
     GENERIC( L : integer := 12; W : integer := 1); --length, width
@@ -228,66 +228,48 @@ BEGIN
         END CASE;
     END PROCESS;
 	
+-- xpm_memory_spram: Single Port RAM
+-- Xilinx Parameterized Macro, version 2019.2
 INPUT_BUFFER_STORAGE : for i in 0 to W-1 generate
-    TDPRAM : xpm_memory_tdpram
+xpm_memory_spram_inst : xpm_memory_spram
     generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
-        ADDR_WIDTH_B => 8, -- DECIMAL
-        AUTO_SLEEP_TIME => 0, -- DECIMAL
-        BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-        BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
-        CASCADE_HEIGHT => 0, -- DECIMAL
-        CLOCKING_MODE => "common_clock", -- String
-        ECC_MODE => "no_ecc", -- String
-        MEMORY_INIT_FILE => "none", -- String
-        MEMORY_INIT_PARAM => "0", -- String
-        MEMORY_OPTIMIZATION => "true", -- String
-        MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
-        MESSAGE_CONTROL => 0, -- DECIMAL
-        READ_DATA_WIDTH_A => 24, -- DECIMAL
-        READ_DATA_WIDTH_B => 24, -- DECIMAL
-        READ_LATENCY_A => 1, -- DECIMAL
-        READ_LATENCY_B => 1, -- DECIMAL
-        READ_RESET_VALUE_A => "0", -- String
-        READ_RESET_VALUE_B => "0", -- String
-        RST_MODE_A => "SYNC", -- String
-        RST_MODE_B => "SYNC", -- String
-        SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
-        USE_MEM_INIT => 1, -- DECIMAL
-        WAKEUP_TIME => "disable_sleep", -- String
-        WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-        WRITE_DATA_WIDTH_B => 24, -- DECIMAL
-        WRITE_MODE_A => "no_change", -- String
-        WRITE_MODE_B => "no_change" -- String
-    ) port map (
-        dbiterra => dbiterra, --unused
-        dbiterrb => dbiterrb, --unused
-        douta => sa_data_out(i),
-        doutb => doutb(i),
-        sbiterra => sbiterra, --unused
-        sbiterrb => sbiterrb, --unused
-        addra => sa_addr,
-        addrb => addrb,
-        clka => clk_dsp,
-        clkb => clk_dsp,
-        dina => sa_data_in(i),
-        dinb => dinb(i), --unused
-        ena => sa_ram_en,
-        enb => enb,
-        injectdbiterra => injectdbiterra, --unused
-        injectdbiterrb => injectdbiterrb, --unused
-        injectsbiterra => injectsbiterra, --unused
-        injectsbiterrb => injectsbiterrb, --unused
-        regcea => regcea, --unused
-        regceb => regceb, --unused
-        rsta => reset,
-        rstb => reset,
-        sleep => sleep, --unused
-        wea => sa_wr_en,
-        web => web
+    ADDR_WIDTH_A => 8, -- DECIMAL
+    AUTO_SLEEP_TIME => 0, -- DECIMAL
+    BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+    CASCADE_HEIGHT => 0, -- DECIMAL
+    ECC_MODE => "no_ecc", -- String
+    MEMORY_INIT_FILE => "none", -- String
+    MEMORY_INIT_PARAM => "0", -- String
+    MEMORY_OPTIMIZATION => "true", -- String
+    MEMORY_PRIMITIVE => "auto", -- String
+    MEMORY_SIZE => 6144, -- DECIMAL
+    MESSAGE_CONTROL => 0, -- DECIMAL
+    READ_DATA_WIDTH_A => 24, -- DECIMAL
+    READ_LATENCY_A => 1, -- DECIMAL
+    READ_RESET_VALUE_A => "0", -- String
+    RST_MODE_A => "SYNC", -- String
+    SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    USE_MEM_INIT => 1, -- DECIMAL
+    WAKEUP_TIME => "disable_sleep", -- String
+    WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+    WRITE_MODE_A => "read_first" -- String
+)
+port map (
+    dbiterra => dbiterra,
+    douta => sa_data_in(i),
+    sbiterra => sbiterra,
+    addra => sa_addr,
+    clka => clk_dsp,
+    dina => sa_data_out(i),
+    ena => sa_ram_en,
+    injectdbiterra => injectdbiterra,
+    injectsbiterra => injectsbiterra,
+    regcea => regcea,
+    rsta => reset,
+    sleep => sleep,
+    wea => sa_wr_en
     );
 end generate;
+-- End of xpm_memory_spram_inst instantiation
 	
 END ARCHITECTURE;

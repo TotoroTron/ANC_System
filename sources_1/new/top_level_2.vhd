@@ -1,7 +1,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 Library xpm;
 use xpm.vcomponents.all;

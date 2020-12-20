@@ -22,7 +22,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.numeric_std.ALL;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 Library xpm;
 use xpm.vcomponents.all;
@@ -48,7 +48,7 @@ architecture Behavioral of fir_testbench is
     signal Coeff : vector_of_std_logic_vector24(0 to 11) := (others => (others => '0'));
     signal count : unsigned(8 downto 0) := (others => '0');
     CONSTANT L : integer    := 12;
-    CONSTANT W : integer    := 1; --width
+    CONSTANT W : integer    := 3; --width
 	CONSTANT R : integer    := L/W; --length/width ratio
     signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
@@ -87,20 +87,20 @@ begin
         Coeff(1) <= X"200000"; -- -0.25
         Coeff(2) <= X"300000"; -- 0.125
         Coeff(3) <= X"400000"; -- 0.25
-        Coeff(4) <= X"500000"; -- -0.25
-        Coeff(5) <= X"600000"; -- 0.125
-        Coeff(6) <= X"700000"; -- 0.25
-        Coeff(7) <= X"800000"; -- -0.25
-        Coeff(8) <= X"900000"; -- 0.125
-        Coeff(9) <= X"a00000"; -- 0.25
-        Coeff(10) <= X"b00000"; -- -0.25
-        Coeff(11) <= X"c00000"; -- 0.125
+        Coeff(4) <= X"100000"; -- -0.25
+        Coeff(5) <= X"200000"; -- 0.125
+        Coeff(6) <= X"300000"; -- 0.25
+        Coeff(7) <= X"400000"; -- -0.25
+        Coeff(8) <= X"100000"; -- 0.125
+        Coeff(9) <= X"200000"; -- 0.25
+        Coeff(10) <= X"300000"; -- -0.25
+        Coeff(11) <= X"400000"; -- 0.125
 
     CLOCK: process
     begin
-        clk <= '0';
-        wait for t_clk/2;
         clk <= '1';
+        wait for t_clk/2;
+        clk <= '0';
         wait for t_clk/2;
     end process;
     

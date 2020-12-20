@@ -2,7 +2,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.numeric_std.ALL;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 
 entity lmsUpdate_testbench is

@@ -18,7 +18,7 @@
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 ENTITY LMS_Update_24 IS
   PORT( clk                               :   IN    std_logic;

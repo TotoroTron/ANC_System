@@ -4,7 +4,7 @@ use xpm.vcomponents.all;
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
-USE work.top_level_pkg.ALL;
+USE work.anc_package.ALL;
 
 ENTITY LMS_Filter_FSM IS
   GENERIC( L : integer := 128; W : integer := 8); --length, width
@@ -70,8 +70,8 @@ ARCHITECTURE Behavioral OF LMS_Filter_FSM IS
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
 BEGIN
 	
---	input_signed <= signed(input);
---	desired_signed <= signed(desired);
+	input_signed <= signed(input);
+	desired_signed <= signed(desired);
 	wt_addr <= std_logic_vector(s_addr);
 	sa_addr <= std_logic_vector(s_addr);
 	
@@ -90,13 +90,13 @@ BEGIN
 --    input_buffer(1 to L-1) <= input_buffer_tmp;
 --	input_buffer(0) <= input_signed;
 	
-    SAMPLE_REGISTER : PROCESS( CLK_ANC )
-    BEGIN
-        IF RISING_EDGE(CLK_ANC) THEN
-           input_signed <= signed(input);
-	       desired_signed <= signed(desired);
-        END IF;
-    END PROCESS;
+--    SAMPLE_REGISTER : PROCESS( CLK_ANC )
+--    BEGIN
+--        IF RISING_EDGE(CLK_ANC) THEN
+--           input_signed <= signed(input);
+--	       desired_signed <= signed(desired);
+--        END IF;
+--    END PROCESS;
 	
 	DSP_STATE_REGISTER : PROCESS(clk_dsp, reset, en)
 	BEGIN
@@ -120,7 +120,8 @@ BEGIN
         variable weight_in 		: vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
         variable sample_in      : vector_of_signed24(0 to W-1) := (others => (others => '0'));
-        variable sample_out     : vector_of_signed24(0 to W-1) := (others => (others => '0'));        
+        variable sample_out     : vector_of_signed24(0 to W-1) := (others => (others => '0'));
+        
         variable mu             : signed(23 downto 0) := "010000000000000000000000"; --fixpt24fr24 = 0.25
         variable leak           : signed(24 downto 0) := "0111111111111111111101110"; --fixpt25fr24 = 0.999998927116394
         variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
@@ -140,29 +141,27 @@ BEGIN
     BEGIN
         --state circuit S1, S2, S3 calculate the filter's output
         --state circuit S4, S5, S6 calculate the new weight vector
-        next_idle <= idle;
-        s_next_addr <= s_addr;
-        s_next_sum <= s_sum;
+        next_idle       <= idle;
+        s_next_addr     <= s_addr;
+        s_next_sum      <= s_sum;
         next_sample_reg <= sample_reg;
-        wt_data_out <= (others => (others => '0'));
-        sa_data_out <= (others => (others => '0'));
-        weight_in := (others => (others => '0'));
-        mult := (others => (others => '0'));
-        mult_cast := (others => (others => '0'));
-        accumulator := (others => '0');
-        leak_w := (others => (others => '0'));
-        mu_err := (others => '0');
-        mu_err_cast := (others => '0');      
-        mu_err_in := (others => (others => '0'));
-        mu_err_in_cast := (others => (others => '0'));  
-        s_sum_cast := (others => '0');
+        weight_in       := (others => (others => '0'));
+        mult            := (others => (others => '0'));
+        mult_cast       := (others => (others => '0'));
+        accumulator     := (others => '0');
+        leak_w          := (others => (others => '0'));
+        mu_err          := (others => '0');
+        mu_err_cast     := (others => '0');      
+        mu_err_in       := (others => (others => '0'));
+        mu_err_in_cast  := (others => (others => '0'));  
+        s_sum_cast      := (others => '0');
         
         CASE STATE IS
         WHEN S0 => --initial state
             wt_ram_en <= '0'; wt_wr_en <= '0';
             sa_ram_en <= '0'; sa_wr_en <= "0"; 
             s_next_addr <= (others => '0');
-            wt_data_out <= (others => (others => '0'));
+            next_sample_reg <= (others => (others => '0'));
             NEXT_STATE <= S0;
             IF clk_anc = '1' THEN
                 next_idle <= '1';
@@ -202,8 +201,6 @@ BEGIN
             end loop;
             
             s_next_sum <= accumulator;
-
-            
             NEXT_STATE <= S4;
         WHEN S4 =>
             wt_ram_en <= '0'; wt_wr_en <= '0';
@@ -235,16 +232,18 @@ BEGIN
             for i in 0 to W-1 loop
                 weight_in(i) := signed(wt_data_in(i));
                 sample_in(i) := signed(sa_data_in(i));
-                next_sample_reg(i) <= sample_in(i);
                 if i = 0 then
                     if s_addr = 0 then
+                        next_sample_reg(i) <= input_signed;
                         data_select := input_signed;
                     else
+                        next_sample_reg(i) <= sample_in(i);
                         data_select := sample_in(i);
                     end if;
                     mu_err_in(i) := mu_err_cast * data_select; -- mu * e(n) * u(n)
                     mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
                 else
+                    next_sample_reg(i) <= sample_in(i);
                     mu_err_in(i) := mu_err_cast * sample_in(i); -- mu * e(n) * u(n)
                     mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
                 end if;
@@ -293,65 +292,49 @@ BEGIN
             END IF;            
         END CASE;
     END PROCESS;
+
+-- xpm_memory_spram: Single Port RAM
+-- Xilinx Parameterized Macro, version 2019.2
 INPUT_BUFFER_STORAGE : for i in 0 to W-1 generate
-    TDPRAM : xpm_memory_tdpram
+xpm_memory_spram_inst : xpm_memory_spram
     generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
-        ADDR_WIDTH_B => 8, -- DECIMAL
-        AUTO_SLEEP_TIME => 0, -- DECIMAL
-        BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-        BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
-        CASCADE_HEIGHT => 0, -- DECIMAL
-        CLOCKING_MODE => "common_clock", -- String
-        ECC_MODE => "no_ecc", -- String
-        MEMORY_INIT_FILE => "none", -- String
-        MEMORY_INIT_PARAM => "0", -- String
-        MEMORY_OPTIMIZATION => "true", -- String
-        MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
-        MESSAGE_CONTROL => 0, -- DECIMAL
-        READ_DATA_WIDTH_A => 24, -- DECIMAL
-        READ_DATA_WIDTH_B => 24, -- DECIMAL
-        READ_LATENCY_A => 1, -- DECIMAL
-        READ_LATENCY_B => 1, -- DECIMAL
-        READ_RESET_VALUE_A => "0", -- String
-        READ_RESET_VALUE_B => "0", -- String
-        RST_MODE_A => "SYNC", -- String
-        RST_MODE_B => "SYNC", -- String
-        SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-        USE_EMBEDDED_CONSTRAINT => 0, -- DECIMAL
-        USE_MEM_INIT => 1, -- DECIMAL
-        WAKEUP_TIME => "disable_sleep", -- String
-        WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-        WRITE_DATA_WIDTH_B => 24, -- DECIMAL
-        WRITE_MODE_A => "no_change", -- String
-        WRITE_MODE_B => "no_change" -- String
-    ) port map (
-        dbiterra => dbiterra, --unused
-        dbiterrb => dbiterrb, --unused
-        douta => sa_data_out(i),
-        doutb => doutb(i),
-        sbiterra => sbiterra, --unused
-        sbiterrb => sbiterrb, --unused
-        addra => sa_addr,
-        addrb => addrb,
-        clka => clk_dsp,
-        clkb => clk_dsp,
-        dina => sa_data_in(i),
-        dinb => dinb(i), --unused
-        ena => sa_ram_en,
-        enb => enb,
-        injectdbiterra => injectdbiterra, --unused
-        injectdbiterrb => injectdbiterrb, --unused
-        injectsbiterra => injectsbiterra, --unused
-        injectsbiterrb => injectsbiterrb, --unused
-        regcea => regcea, --unused
-        regceb => regceb, --unused
-        rsta => reset,
-        rstb => reset,
-        sleep => sleep, --unused
-        wea => sa_wr_en,
-        web => web
+    ADDR_WIDTH_A => 8, -- DECIMAL
+    AUTO_SLEEP_TIME => 0, -- DECIMAL
+    BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+    CASCADE_HEIGHT => 0, -- DECIMAL
+    ECC_MODE => "no_ecc", -- String
+    MEMORY_INIT_FILE => "none", -- String
+    MEMORY_INIT_PARAM => "0", -- String
+    MEMORY_OPTIMIZATION => "true", -- String
+    MEMORY_PRIMITIVE => "auto", -- String
+    MEMORY_SIZE => 6144, -- DECIMAL
+    MESSAGE_CONTROL => 0, -- DECIMAL
+    READ_DATA_WIDTH_A => 24, -- DECIMAL
+    READ_LATENCY_A => 1, -- DECIMAL
+    READ_RESET_VALUE_A => "0", -- String
+    RST_MODE_A => "SYNC", -- String
+    SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+    USE_MEM_INIT => 1, -- DECIMAL
+    WAKEUP_TIME => "disable_sleep", -- String
+    WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+    WRITE_MODE_A => "read_first" -- String
+)
+port map (
+    dbiterra => dbiterra,
+    douta => sa_data_in(i),
+    sbiterra => sbiterra,
+    addra => sa_addr,
+    clka => clk_dsp,
+    dina => sa_data_out(i),
+    ena => sa_ram_en,
+    injectdbiterra => injectdbiterra,
+    injectsbiterra => injectsbiterra,
+    regcea => regcea,
+    rsta => reset,
+    sleep => sleep,
+    wea => sa_wr_en
     );
-end generate;	
+end generate;
+-- End of xpm_memory_spram_inst instantiation
+
 END ARCHITECTURE;

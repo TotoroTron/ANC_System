@@ -1,6 +1,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-use work.top_level_pkg.all;
+use work.anc_package.all;
  
 ENTITY PRBS_testbench IS
 END PRBS_testbench;
