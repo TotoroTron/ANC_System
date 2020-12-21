@@ -106,10 +106,10 @@ begin
     
     STIMULUS : PROCESS
     BEGIN
---        ENABLE <= '0';
---        FOR I IN 1 TO 4 LOOP
---        WAIT UNTIL RISING_EDGE(CLK_ANC);
---        END LOOP;
+        ENABLE <= '0';
+        FOR I IN 1 TO 4 LOOP
+        WAIT UNTIL RISING_EDGE(CLK_ANC);
+        END LOOP;
         ENABLE <= '1';
 --        FOR I IN 1 TO 4 LOOP
 --        WAIT UNTIL RISING_EDGE(CLK_ANC);

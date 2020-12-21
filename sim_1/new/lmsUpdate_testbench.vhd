@@ -108,15 +108,26 @@ begin
             tmp(3) <= "001011001100110011001100";
         ESP_Coeff(5) <= std_logic_vector(-signed(tmp(3)));-- -0.175
     
-    LMS_Update : entity work.LMS_UPDATE_12 --Unit Under Test
+--    LMS_Update : entity work.LMS_UPDATE_12 --Unit Under Test
+--    port map(
+--        clk => clk_anc,
+--        reset => reset,
+--        enb => LMSU_en,
+--        X => LMSU_input,
+--        E => LMSU_error,
+--        adapt => adapt,
+--        W => Wanc
+--    );
+
+    LMS_UPDATE : entity work. LMS_Filter_12_EConverted
     port map(
         clk => clk_anc,
         reset => reset,
-        enb => LMSU_en,
-        X => LMSU_input,
-        E => LMSU_error,
+        clk_enable => LMSU_en,
+        input => LMSU_input,
+        error => LMSU_error,
         adapt => adapt,
-        W => Wanc
+        weights => Wanc
     );
         LMSU_input <= ESP_FilterOut;
         LMSU_error <= summation;

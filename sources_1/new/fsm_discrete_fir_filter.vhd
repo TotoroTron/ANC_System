@@ -18,9 +18,9 @@ ENTITY Discrete_FIR_Filter_FSM IS
         input 		: IN  std_logic_vector(23 DOWNTO 0); 
 		output 		: out std_logic_vector(23 downto 0) := (others => '0');
 		--RAM INTERFACE
-		wt_addr 		: out std_logic_vector(7 downto 0) := (others => '0');
-		wt_ram_en 		: inout std_logic := '0';
-		wt_wr_en		: inout std_logic := '0';
+		wt_addr 	: out std_logic_vector(7 downto 0) := (others => '0');
+		wt_ram_en 	: inout std_logic := '0';
+		wt_wr_en	: inout std_logic := '0';
 		wt_data_in 	: in  vector_of_std_logic_vector24(0 to W-1)
 	);
 END Discrete_FIR_Filter_FSM;
@@ -31,8 +31,6 @@ ARCHITECTURE Behavioral OF Discrete_FIR_Filter_FSM IS
 	SIGNAL STATE               : STATE_TYPE := S0;
 	SIGNAL NEXT_STATE 	       : STATE_TYPE;
 	SIGNAL input_signed 	   : signed(23 downto 0) := (others => '0');
---	SIGNAL input_buffer_tmp	   : vector_of_signed24(0 to L-2) := (others => (others => '0'));
---	signal input_buffer        : vector_of_signed24(0 to L-1) := (others => (others => '0'));
 	SIGNAL s_addr			   : unsigned(7 downto 0) := (others => '0');
 	signal s_next_addr         : unsigned(7 downto 0) := (others => '0');
 	SIGNAL idle                : std_logic := '0';
@@ -61,28 +59,6 @@ BEGIN
 	wt_addr <= std_logic_vector(s_addr);
 	sa_addr <= std_logic_vector(s_addr);
 
---	SAMPLES_REGISTER : PROCESS (clk_anc, reset, en)
---	BEGIN
---	IF rising_edge(clk_anc) THEN
---		IF reset = '1' THEN
---			input_buffer_tmp <= (OTHERS => (others => '0'));
---		ELSIF en = '1' THEN
---		    input_buffer_tmp(0) <= input_signed;
---			input_buffer_tmp(1 to L-2) <= input_buffer_tmp(0 to L-3);
---		END IF;
---	END IF;
---	END PROCESS SAMPLES_REGISTER;
-	
---	input_buffer(1 to L-1) <= input_buffer_tmp;
---	input_buffer(0) <= input_signed;
-	
---    SAMPLE_REGISTER : PROCESS( CLK_ANC )
---    BEGIN
---        IF RISING_EDGE(CLK_ANC) THEN
---           input_signed <= signed(input);
---        END IF;
---    END PROCESS;
-	
 	DSP_STATE_REGISTER : PROCESS(clk_dsp, reset, en)
 	BEGIN
 	IF rising_edge(clk_dsp) THEN
@@ -121,18 +97,18 @@ BEGIN
         accumulator     := (others => '0');
         sample_in       := (others => (others => '0'));
         sample_out      := (others => (others => '0'));
-        mux1_out     := (others => (others => '0'));
+        mux1_out        := (others => (others => '0'));
+        mux2_out        := (others => (others => '0'));
         
         CASE STATE IS
         WHEN S0 => --initial state
             wt_ram_en <= '0'; wt_wr_en <= '0';
             sa_ram_en <= '0'; sa_wr_en <= "0"; 
-            --s_next_addr <= (others => '0');
+            s_next_addr <= (others => '0');
             NEXT_STATE <= S0;
             IF CLK_ANC = '1' THEN
                 NEXT_IDLE <= '1';
             ELSIF CLK_ANC = '0' AND IDLE = '1' THEN
-                s_next_addr <= (others => '0');
                 s_next_sum <= (others => '0');
                 NEXT_IDLE <= '0';
                 NEXT_STATE <= S1;
@@ -156,16 +132,12 @@ BEGIN
                 
                 if i = 0 then
                     if s_addr = 0 then
-                    mux1_out(i) := input_signed;
-                    else
-                    mux1_out(i) := sample_in(i);
-                    end if;
+                    mux1_out(i) := input_signed; else
+                    mux1_out(i) := sample_in(i); end if;
                 else
                     if s_addr = R-1 then
-                    mux1_out(i) := sample_reg(i-1);
-                    else
-                    mux1_out(i) := sample_in(i);
-                    end if;
+                    mux1_out(i) := sample_reg(i-1); else
+                    mux1_out(i) := sample_in(i); end if;
                 end if;
                 
                 next_sample_reg(i) <= mux1_out(i);
@@ -174,10 +146,8 @@ BEGIN
                 
                 if i = 0 then
                     if s_addr = 0 then
-                    mux2_out(i) := input_signed;
-                    else
-                    mux2_out(i) := sample_in(i);
-                    end if;
+                    mux2_out(i) := input_signed; else
+                    mux2_out(i) := sample_in(i); end if;
                 else
                     mux2_out(i) := sample_in(i);
                 end if;
@@ -185,8 +155,7 @@ BEGIN
                 mult(i) := weight_in(i) * mux2_out(i);
                 mult_cast(i) := resize(mult(i), 53);
                 accumulator := accumulator + mult_cast(i); --cascading adder risks timing failure
-
-            end loop;
+            end loop; --find a way to for-loop a balanced adder tree
 
             s_next_sum <= accumulator;
             
@@ -199,7 +168,6 @@ BEGIN
                 NEXT_STATE <= S1;
             ELSIF s_addr = R-1 THEN
                 output <= std_logic_vector(s_sum(47 downto 24));
-                --s_next_addr <= (others => '0');
                 NEXT_STATE <= S0;
             END IF;
         END CASE;

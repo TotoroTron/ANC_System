@@ -11,7 +11,7 @@ entity primary_path is
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
-		clk_ila   : in std_logic;
+		clk_ila     : in std_logic;
 		reset 		: in std_logic;
 		
 		filt_enable : in std_logic;
@@ -30,7 +30,6 @@ architecture rtl of primary_path is
 	signal dbiterrb			:	std_logic := '0';
 	signal douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal doutb_24         :   vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));	
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
 	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');

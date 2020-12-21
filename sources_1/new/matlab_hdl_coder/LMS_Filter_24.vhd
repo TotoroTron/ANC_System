@@ -60,7 +60,7 @@ ARCHITECTURE rtl OF LMS_Filter_24 IS
 
   -- Constants
   CONSTANT C_LMS_FILTER_STEP_SIZE         : signed(23 DOWNTO 0) := 
-    "001000000000000000000000";  -- sfix24_En24
+    "010000000000000000000000";  -- sfix24_En24
 
   -- Signals
   SIGNAL enb                              : std_logic;

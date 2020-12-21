@@ -124,7 +124,7 @@ BEGIN
     -- W delay pipeline
     xBuffer_temp(1 TO 11) := xBuffer(0 TO 10);
     xBuffer_temp(0) := X_signed;
-    mu_err := to_signed(16#200000#, 24) * E_signed; --step size (0.125) * error
+    mu_err := to_signed(16#300000#, 24) * E_signed; --step size (0.25) * error
     IF Adapt = '1' THEN 
       add_cast := resize(wBuffer(0) & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0' & '0', 73);
       mul_temp := mu_err * X_signed;

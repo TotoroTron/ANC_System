@@ -29,7 +29,7 @@ architecture Behavioral of lms_update_fsm_testbench is
     constant t1 : time := 8ns;
     
     CONSTANT L : integer := 12;
-    CONSTANT W : integer := 1;
+    CONSTANT W : integer := 3;
     CONSTANT R : integer := L/W; --length/width ratio
         
     signal LMSU_input, LMSU_error: std_logic_vector(23 downto 0) := (others => '0');
@@ -55,12 +55,12 @@ architecture Behavioral of lms_update_fsm_testbench is
     
     signal dbiterra 		: 	std_logic := '0';
 	signal dbiterrb			:	std_logic := '0';
-	signal esp_douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal esp_doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal sp_douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal sp_doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal pri_douta 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal pri_doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
+	signal esp_douta 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal esp_doutb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal sp_douta 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal sp_doutb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal pri_douta 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal pri_doutb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
 	signal esp_addra 			:	std_logic_vector(7 downto 0) := (others => '0');
@@ -69,12 +69,12 @@ architecture Behavioral of lms_update_fsm_testbench is
 	signal sp_addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
     signal pri_addra 			:	std_logic_vector(7 downto 0) := (others => '0');
 	signal pri_addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
-	signal esp_dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal esp_dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal sp_dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal sp_dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal pri_dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
-	signal pri_dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));		
+	signal esp_dina 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal esp_dinb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal sp_dina 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal sp_dinb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal pri_dina 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));
+	signal pri_dinb 			:	vector_of_std_logic_vector24(0 to 0) := (others => (others => '0'));		
 	signal esp_ena 				:	std_logic := '0';
 	signal esp_enb 				:	std_logic := '0';
     signal sp_ena 				:	std_logic := '0';
@@ -148,7 +148,7 @@ begin
         adapt <= '1';
 
 ESTIM_SEC_PATH : entity work.Discrete_FIR_Filter_FSM
-generic map(L => L, W => W)
+generic map(L => L, W => 1)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -168,8 +168,7 @@ port map(
     
 -- xpm_memory_tdpram: True Dual Port RAM
 -- Xilinx Parameterized Macro, version 2019.2
-ESP_WEIGHTS : for i in 0 to W-1 generate
-    WEIGHTS_STORAGE : xpm_memory_tdpram
+    ESP_WEIGHTS_STORAGE : xpm_memory_tdpram
     generic map (
         ADDR_WIDTH_A => 8, -- DECIMAL
         ADDR_WIDTH_B => 8, -- DECIMAL
@@ -204,16 +203,16 @@ ESP_WEIGHTS : for i in 0 to W-1 generate
     ) port map (
         dbiterra => dbiterra, --unused
         dbiterrb => dbiterrb, --unused
-        douta => esp_douta(i),
-        doutb => esp_doutb(i),
+        douta => esp_douta(0),
+        doutb => esp_doutb(0),
         sbiterra => sbiterra, --unused
         sbiterrb => sbiterrb, --unused
         addra => esp_addra,
         addrb => esp_addrb,
         clka => clk_dsp,
         clkb => clk_dsp,
-        dina => esp_dina(i),
-        dinb => esp_dinb(i), --unused
+        dina => esp_dina(0),
+        dinb => esp_dinb(0), --unused
         ena => esp_ena,
         enb => esp_enb,
         injectdbiterra => injectdbiterra, --unused
@@ -229,10 +228,9 @@ ESP_WEIGHTS : for i in 0 to W-1 generate
         web => esp_web
     );
     -- End of xpm_memory_tdpram_inst instantiation
-end generate;
 
 SECONDARY_PATH : entity work.Discrete_FIR_Filter_FSM
-generic map(L => L, W => W)
+generic map(L => L, W => 1)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -252,8 +250,7 @@ port map(
     
 -- xpm_memory_tdpram: True Dual Port RAM
 -- Xilinx Parameterized Macro, version 2019.2
-SP_WEIGHTS : for i in 0 to W-1 generate
-    WEIGHTS_STORAGE : xpm_memory_tdpram
+    SP_WEIGHTS_STORAGE : xpm_memory_tdpram
     generic map (
         ADDR_WIDTH_A => 8, -- DECIMAL
         ADDR_WIDTH_B => 8, -- DECIMAL
@@ -288,16 +285,16 @@ SP_WEIGHTS : for i in 0 to W-1 generate
     ) port map (
         dbiterra => dbiterra, --unused
         dbiterrb => dbiterrb, --unused
-        douta => sp_douta(i),
-        doutb => sp_doutb(i),
+        douta => sp_douta(0),
+        doutb => sp_doutb(0),
         sbiterra => sbiterra, --unused
         sbiterrb => sbiterrb, --unused
         addra => sp_addra,
         addrb => sp_addrb,
         clka => clk_dsp,
         clkb => clk_dsp,
-        dina => sp_dina(i),
-        dinb => sp_dinb(i), --unused
+        dina => sp_dina(0),
+        dinb => sp_dinb(0), --unused
         ena => sp_ena,
         enb => sp_enb,
         injectdbiterra => injectdbiterra, --unused
@@ -313,10 +310,9 @@ SP_WEIGHTS : for i in 0 to W-1 generate
         web => sp_web
     );
     -- End of xpm_memory_tdpram_inst instantiation
-end generate;
  
     PRIMARY_PATH : entity work.Discrete_FIR_Filter_FSM
-generic map(L => L, W => W)
+generic map(L => L, W => 1)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
@@ -333,10 +329,11 @@ port map(
 );
     PRI_FilterIn <= sine_out_ds;
     PRI_en <= '1';
+    
+    
 -- xpm_memory_tdpram: True Dual Port RAM
 -- Xilinx Parameterized Macro, version 2019.2
-PRI_WEIGHTS : for i in 0 to W-1 generate
-    WEIGHTS_STORAGE : xpm_memory_tdpram
+    PRI_WEIGHTS_STORAGE : xpm_memory_tdpram
     generic map (
         ADDR_WIDTH_A => 8, -- DECIMAL
         ADDR_WIDTH_B => 8, -- DECIMAL
@@ -371,16 +368,16 @@ PRI_WEIGHTS : for i in 0 to W-1 generate
     ) port map (
         dbiterra => dbiterra, --unused
         dbiterrb => dbiterrb, --unused
-        douta => pri_douta(i),
-        doutb => pri_doutb(i),
+        douta => pri_douta(0),
+        doutb => pri_doutb(0),
         sbiterra => sbiterra, --unused
         sbiterrb => sbiterrb, --unused
         addra => pri_addra,
         addrb => pri_addrb,
         clka => clk_dsp,
         clkb => clk_dsp,
-        dina => pri_dina(i),
-        dinb => pri_dinb(i), --unused
+        dina => pri_dina(0),
+        dinb => pri_dinb(0), --unused
         ena => pri_ena,
         enb => pri_enb,
         injectdbiterra => injectdbiterra, --unused
@@ -396,7 +393,6 @@ PRI_WEIGHTS : for i in 0 to W-1 generate
         web => pri_web
     );
     -- End of xpm_memory_tdpram_inst instantiation
-end generate;
 
     summation <= std_logic_vector( signed(PRI_FilterOut) + signed(SP_FilterOut));
     

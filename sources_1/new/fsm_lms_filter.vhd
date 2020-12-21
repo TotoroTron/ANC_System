@@ -33,15 +33,12 @@ ARCHITECTURE Behavioral OF LMS_Filter_FSM IS
 	SIGNAL NEXT_STATE 	        : STATE_TYPE;
 	SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
 	SIGNAL desired_signed       : signed(23 DOWNTO 0) := (others => '0');
-	SIGNAL input_buffer_tmp     : vector_of_signed24(0 TO L-2) := (others => (others => '0'));
-	SIGNAL input_buffer         : vector_of_signed24(0 TO L-1) := (others => (others => '0'));
 	SIGNAL s_addr				: unsigned(7 downto 0) := (others => '0');
 	SIGNAL s_next_addr	        : unsigned(7 downto 0) := (others => '0');
 	signal idle                 : std_logic := '0';
 	signal next_idle            : std_logic := '0';
     signal s_sum                : signed(52 downto 0) := (others => '0');
 	signal s_next_sum           : signed(52 downto 0) := (others => '0');
-	signal accu_cast            : signed(23 downto 0) := (others => '0');
 	
     signal sample_reg           : vector_of_signed24(0 to W-1) := (others => (others => '0'));
     signal next_sample_reg      : vector_of_signed24(0 to W-1) := (others => (others => '0'));
@@ -74,29 +71,6 @@ BEGIN
 	desired_signed <= signed(desired);
 	wt_addr <= std_logic_vector(s_addr);
 	sa_addr <= std_logic_vector(s_addr);
-	
---	SAMPLES_REGISTER : PROCESS (clk_anc, reset, en)
---	BEGIN
---	IF rising_edge(clk_anc) THEN
---		IF reset = '1' THEN
---			input_buffer_tmp <= (OTHERS => (others => '0'));
---		ELSIF en = '1' THEN
---		    input_buffer_tmp(0) <= input_signed;
---			input_buffer_tmp(1 to L-2) <= input_buffer_tmp(0 to L-3);
---		END IF;
---	END IF;
---	END PROCESS SAMPLES_REGISTER;
-	
---    input_buffer(1 to L-1) <= input_buffer_tmp;
---	input_buffer(0) <= input_signed;
-	
---    SAMPLE_REGISTER : PROCESS( CLK_ANC )
---    BEGIN
---        IF RISING_EDGE(CLK_ANC) THEN
---           input_signed <= signed(input);
---	       desired_signed <= signed(desired);
---        END IF;
---    END PROCESS;
 	
 	DSP_STATE_REGISTER : PROCESS(clk_dsp, reset, en)
 	BEGIN
@@ -137,7 +111,8 @@ BEGIN
         variable accumulator    : signed(52 downto 0) := (others => '0');
         variable s_sum_cast     : signed(23 downto 0) := (others => '0');
         
-        variable data_select    : signed(23 downto 0) := (others => '0');
+        variable mux1_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
+        variable mux2_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
     BEGIN
         --state circuit S1, S2, S3 calculate the filter's output
         --state circuit S4, S5, S6 calculate the new weight vector
@@ -155,6 +130,10 @@ BEGIN
         mu_err_in       := (others => (others => '0'));
         mu_err_in_cast  := (others => (others => '0'));  
         s_sum_cast      := (others => '0');
+        sample_in       := (others => (others => '0'));
+        sample_out      := (others => (others => '0'));
+        mux1_out        := (others => (others => '0'));
+        mux2_out        := (others => (others => '0'));
         
         CASE STATE IS
         WHEN S0 => --initial state
@@ -180,27 +159,27 @@ BEGIN
             NEXT_STATE <= S3;
         WHEN S3 => --clock-in data from memory, increment address
             wt_ram_en <= '0'; wt_wr_en <= '0';
-            sa_ram_en <= '1'; sa_wr_en <= "1"; 
+            sa_ram_en <= '1'; sa_wr_en <= "0"; 
             accumulator := s_sum;
             for i in 0 to W-1 loop
                 weight_in(i) := signed(wt_data_in(i));
                 sample_in(i) := signed(sa_data_in(i));
+                
                 if i = 0 then
                     if s_addr = 0 then
-                        data_select := input_signed;
-                    else
-                        data_select := sample_in(i);
-                    end if;
-                    mult(i) := weight_in(i) * data_select;
-                    mult_cast(i) := resize(mult(i), 53);
+                    mux2_out(i) := input_signed; else
+                    mux2_out(i) := sample_in(i); end if;
                 else
-                    mult(i) := weight_in(i) * sample_in(i);
-                    mult_cast(i) := resize(mult(i), 53);
+                    mux2_out(i) := sample_in(i);
                 end if;
+                
+                mult(i) := weight_in(i) * mux2_out(i);
+                mult_cast(i) := resize(mult(i), 53);
                 accumulator := accumulator + mult_cast(i); --cascading adder risks timing failure
-            end loop;
+            end loop; --find a way to for-loop a balanced adder tree
             
             s_next_sum <= accumulator;
+            
             NEXT_STATE <= S4;
         WHEN S4 =>
             wt_ram_en <= '0'; wt_wr_en <= '0';
@@ -232,51 +211,44 @@ BEGIN
             for i in 0 to W-1 loop
                 weight_in(i) := signed(wt_data_in(i));
                 sample_in(i) := signed(sa_data_in(i));
+                
+                --BEGIN UPDATE INPUT BUFFER                
                 if i = 0 then
                     if s_addr = 0 then
-                        next_sample_reg(i) <= input_signed;
-                        data_select := input_signed;
-                    else
-                        next_sample_reg(i) <= sample_in(i);
-                        data_select := sample_in(i);
-                    end if;
-                    mu_err_in(i) := mu_err_cast * data_select; -- mu * e(n) * u(n)
-                    mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
+                    mux1_out(i) := input_signed; else
+                    mux1_out(i) := sample_in(i); end if;
                 else
-                    next_sample_reg(i) <= sample_in(i);
-                    mu_err_in(i) := mu_err_cast * sample_in(i); -- mu * e(n) * u(n)
-                    mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
+                    if s_addr = R-1 then
+                    mux1_out(i) := sample_reg(i-1); else
+                    mux1_out(i) := sample_in(i); end if;
                 end if;
-            end loop;
-            
-            if adapt = '1' then
-                for i in 0 to W-1 loop
-                leak_w(i) := leak * resize(weight_in(i),25);
-                weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mu_err_in_cast(i),25);
-                --weight_out(i)	:= resize(weight_in(i), 25) + resize(mu_err_in_cast(i), 25); --w(n) = w(n-1) + mu*e(n)*u(n)
-                end loop;
-            else
-                for i in 0 to W-1 loop 
-                weight_out(i)   := resize(weight_in(i), 25); --no change: w(n) = w(n-1)
-                end loop;
-            end if;
-            
-            for i in 0 to W-1 loop
-                if i = 0 then
-                    if s_addr = 0 then sample_out(i) := (others => '0');
-                    elsif s_addr = 1 then sample_out(i) := input_signed;
-                    else sample_out(i) := sample_reg(i);
-                    end if;
-                else
-                    if s_addr = 0 then sample_out(i) := sample_reg(i-1);
-                    else sample_out(i) := sample_reg(i);
-                    end if;
-                end if;
-            end loop;
-            
-            for i in 0 to W-1 loop
-                wt_data_out(i) <= std_logic_vector(weight_out(i)(23 downto 0)); --output value to memory
+                
+                next_sample_reg(i) <= mux1_out(i);
+                sample_out(i) := sample_reg(i);
                 sa_data_out(i) <= std_logic_vector(sample_out(i)(23 downto 0));
+                --END UPDATE INPUT BUFFER
+                
+                --BEGIN UPDATE WEIGHT VECTOR
+                if i = 0 then
+                    if s_addr = 0 then
+                    mux2_out(i) := input_signed; else
+                    mux2_out(i) := sample_in(i); end if;
+                else
+                    mux2_out(i) := sample_in(i);
+                end if;
+                
+                mu_err_in(i) := mu_err_cast * mux2_out(i);
+                mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
+                
+                if adapt = '1' then
+--                    leak_w(i) := leak * resize(weight_in(i),25);
+--                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mu_err_in_cast(i),25);                
+                    weight_out(i) := resize(weight_in(i),25) + resize(mu_err_in_cast(i),25);
+                else
+                    weight_out(i) := resize(weight_in(i),25);
+                end if;
+                wt_data_out(i) <= std_logic_vector(weight_out(i)(23 downto 0));
+                --END UPDATE WEIGHT VECTOR
             end loop;
             
             NEXT_STATE <= S8;
