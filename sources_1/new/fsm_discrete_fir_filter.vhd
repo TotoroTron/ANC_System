@@ -107,7 +107,8 @@ BEGIN
         variable sample_out     : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable mult			: vector_of_signed48(0 to W-1) := (others => (others => '0'));
         variable mult_cast	    : vector_of_signed53(0 to W-1) := (others => (others => '0'));
-        variable data_select    : signed(23 downto 0) := (others => '0');
+        variable mux1_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
+        variable mux2_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable accumulator	: signed(52 downto 0) := (others => '0');
     BEGIN
         next_idle       <= idle;
@@ -118,9 +119,9 @@ BEGIN
         mult            := (others => (others => '0'));
         mult_cast       := (others => (others => '0'));
         accumulator     := (others => '0');
-        --sample_in       := (others => (others => '0'));
-        --sample_out      := (others => (others => '0'));
-        --data_select     := (others => '0');
+        sample_in       := (others => (others => '0'));
+        sample_out      := (others => (others => '0'));
+        mux1_out     := (others => (others => '0'));
         
         CASE STATE IS
         WHEN S0 => --initial state
@@ -152,52 +153,42 @@ BEGIN
             for i in 0 to W-1 loop
                 weight_in(i) := signed(wt_data_in(i));
                 sample_in(i) := signed(sa_data_in(i));
+                
                 if i = 0 then
                     if s_addr = 0 then
-                        data_select := input_signed;
-                        sample_out(i) := X"aaaaaa";
+                    mux1_out(i) := input_signed;
                     else
-                        data_select := sample_in(i);
-                        sample_out(i) := sample_reg(i);
+                    mux1_out(i) := sample_in(i);
                     end if;
-                    next_sample_reg(i) <= data_select;
-                    mult(i) := weight_in(i) * data_select;
-                    mult_cast(i) := resize(mult(i), 53);
                 else
-                    next_sample_reg(i) <= sample_in(i);
-                    mult(i) := weight_in(i) * sample_in(i);
-                    mult_cast(i) := resize(mult(i), 53);
-                    if s_addr = 0 then
-                        sample_out(i) := sample_reg(i-1);
+                    if s_addr = R-1 then
+                    mux1_out(i) := sample_reg(i-1);
                     else
-                        sample_out(i) := sample_reg(i);
+                    mux1_out(i) := sample_in(i);
                     end if;
                 end if;
-                accumulator := accumulator + mult_cast(i); --cascading adder risks timing failure
+                
+                next_sample_reg(i) <= mux1_out(i);
+                sample_out(i) := sample_reg(i);
                 sa_data_out(i) <= std_logic_vector(sample_out(i)(23 downto 0));
+                
+                if i = 0 then
+                    if s_addr = 0 then
+                    mux2_out(i) := input_signed;
+                    else
+                    mux2_out(i) := sample_in(i);
+                    end if;
+                else
+                    mux2_out(i) := sample_in(i);
+                end if;
+                
+                mult(i) := weight_in(i) * mux2_out(i);
+                mult_cast(i) := resize(mult(i), 53);
+                accumulator := accumulator + mult_cast(i); --cascading adder risks timing failure
+
             end loop;
-            
+
             s_next_sum <= accumulator;
-            
---            for i in 0 to W-1 loop
---                if i = 0 then
---                    if s_addr = 0 then
---                        sample_out(i) := (others => '0');
---                    else
---                        sample_out(i) := sample_reg(i);
---                    end if;
---                else
---                    if s_addr = 0 then
---                        sample_out(i) := sample_reg(i-1);
---                    else
---                        sample_out(i) := sample_reg(i);
---                    end if;
---                end if;
---            end loop;
-            
---            for i in 0 to W-1 loop
---                sa_data_out(i) <= std_logic_vector(sample_out(i)(23 downto 0));
---            end loop;
             
             NEXT_STATE <= S4;
         WHEN S4 => --increment address
@@ -214,124 +205,47 @@ BEGIN
         END CASE;
     END PROCESS;
     
--- xpm_memory_spram: Single Port RAM
--- Xilinx Parameterized Macro, version 2019.2
---INPUT_BUFFER_STORAGE : for i in 0 to W-1 generate
-xpm_memory_spram_inst0 : xpm_memory_spram
-    generic map (
-    ADDR_WIDTH_A => 8, -- DECIMAL
-    AUTO_SLEEP_TIME => 0, -- DECIMAL
-    BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-    CASCADE_HEIGHT => 0, -- DECIMAL
-    ECC_MODE => "no_ecc", -- String
-    MEMORY_INIT_FILE => "none", -- String
-    MEMORY_INIT_PARAM => "0", -- String
-    MEMORY_OPTIMIZATION => "true", -- String
-    MEMORY_PRIMITIVE => "auto", -- String
-    MEMORY_SIZE => 6144, -- DECIMAL
-    MESSAGE_CONTROL => 0, -- DECIMAL
-    READ_DATA_WIDTH_A => 24, -- DECIMAL
-    READ_LATENCY_A => 1, -- DECIMAL
-    READ_RESET_VALUE_A => "0", -- String
-    RST_MODE_A => "SYNC", -- String
-    SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-    USE_MEM_INIT => 1, -- DECIMAL
-    WAKEUP_TIME => "disable_sleep", -- String
-    WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-    WRITE_MODE_A => "read_first" -- String
-)
-port map (
-    dbiterra => dbiterra,
-    douta => sa_data_in(0),
-    sbiterra => sbiterra,
-    addra => sa_addr,
-    clka => clk_dsp,
-    dina => sa_data_out(0),
-    ena => sa_ram_en,
-    injectdbiterra => injectdbiterra,
-    injectsbiterra => injectsbiterra,
-    regcea => regcea,
-    rsta => reset,
-    sleep => sleep,
-    wea => sa_wr_en
-    );
-    xpm_memory_spram_inst1 : xpm_memory_spram
-    generic map (
-    ADDR_WIDTH_A => 8, -- DECIMAL
-    AUTO_SLEEP_TIME => 0, -- DECIMAL
-    BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-    CASCADE_HEIGHT => 0, -- DECIMAL
-    ECC_MODE => "no_ecc", -- String
-    MEMORY_INIT_FILE => "none", -- String
-    MEMORY_INIT_PARAM => "0", -- String
-    MEMORY_OPTIMIZATION => "true", -- String
-    MEMORY_PRIMITIVE => "auto", -- String
-    MEMORY_SIZE => 6144, -- DECIMAL
-    MESSAGE_CONTROL => 0, -- DECIMAL
-    READ_DATA_WIDTH_A => 24, -- DECIMAL
-    READ_LATENCY_A => 1, -- DECIMAL
-    READ_RESET_VALUE_A => "0", -- String
-    RST_MODE_A => "SYNC", -- String
-    SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-    USE_MEM_INIT => 1, -- DECIMAL
-    WAKEUP_TIME => "disable_sleep", -- String
-    WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-    WRITE_MODE_A => "read_first" -- String
-)
-port map (
-    dbiterra => dbiterra,
-    douta => sa_data_in(1),
-    sbiterra => sbiterra,
-    addra => sa_addr,
-    clka => clk_dsp,
-    dina => sa_data_out(1),
-    ena => sa_ram_en,
-    injectdbiterra => injectdbiterra,
-    injectsbiterra => injectsbiterra,
-    regcea => regcea,
-    rsta => reset,
-    sleep => sleep,
-    wea => sa_wr_en
-    );
-    xpm_memory_spram_inst2 : xpm_memory_spram
-    generic map (
-    ADDR_WIDTH_A => 8, -- DECIMAL
-    AUTO_SLEEP_TIME => 0, -- DECIMAL
-    BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
-    CASCADE_HEIGHT => 0, -- DECIMAL
-    ECC_MODE => "no_ecc", -- String
-    MEMORY_INIT_FILE => "none", -- String
-    MEMORY_INIT_PARAM => "0", -- String
-    MEMORY_OPTIMIZATION => "true", -- String
-    MEMORY_PRIMITIVE => "auto", -- String
-    MEMORY_SIZE => 6144, -- DECIMAL
-    MESSAGE_CONTROL => 0, -- DECIMAL
-    READ_DATA_WIDTH_A => 24, -- DECIMAL
-    READ_LATENCY_A => 1, -- DECIMAL
-    READ_RESET_VALUE_A => "0", -- String
-    RST_MODE_A => "SYNC", -- String
-    SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
-    USE_MEM_INIT => 1, -- DECIMAL
-    WAKEUP_TIME => "disable_sleep", -- String
-    WRITE_DATA_WIDTH_A => 24, -- DECIMAL
-    WRITE_MODE_A => "read_first" -- String
-)
-port map (
-    dbiterra => dbiterra,
-    douta => sa_data_in(2),
-    sbiterra => sbiterra,
-    addra => sa_addr,
-    clka => clk_dsp,
-    dina => sa_data_out(2),
-    ena => sa_ram_en,
-    injectdbiterra => injectdbiterra,
-    injectsbiterra => injectsbiterra,
-    regcea => regcea,
-    rsta => reset,
-    sleep => sleep,
-    wea => sa_wr_en
-    );
---end generate;
--- End of xpm_memory_spram_inst instantiation
-
+    -- xpm_memory_spram: Single Port RAM
+    -- Xilinx Parameterized Macro, version 2019.2
+    INPUT_BUFFER_STORAGE : for i in 0 to W-1 generate
+    xpm_memory_spram_inst0 : xpm_memory_spram
+        generic map (
+        ADDR_WIDTH_A => 8, -- DECIMAL
+        AUTO_SLEEP_TIME => 0, -- DECIMAL
+        BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
+        CASCADE_HEIGHT => 0, -- DECIMAL
+        ECC_MODE => "no_ecc", -- String
+        MEMORY_INIT_FILE => "none", -- String
+        MEMORY_INIT_PARAM => "0", -- String
+        MEMORY_OPTIMIZATION => "true", -- String
+        MEMORY_PRIMITIVE => "auto", -- String
+        MEMORY_SIZE => 6144, -- DECIMAL
+        MESSAGE_CONTROL => 0, -- DECIMAL
+        READ_DATA_WIDTH_A => 24, -- DECIMAL
+        READ_LATENCY_A => 1, -- DECIMAL
+        READ_RESET_VALUE_A => "0", -- String
+        RST_MODE_A => "SYNC", -- String
+        SIM_ASSERT_CHK => 0, -- DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+        USE_MEM_INIT => 1, -- DECIMAL
+        WAKEUP_TIME => "disable_sleep", -- String
+        WRITE_DATA_WIDTH_A => 24, -- DECIMAL
+        WRITE_MODE_A => "read_first" -- String
+    )
+    port map (
+        dbiterra => dbiterra,
+        douta => sa_data_in(i),
+        sbiterra => sbiterra,
+        addra => sa_addr,
+        clka => clk_dsp,
+        dina => sa_data_out(i),
+        ena => sa_ram_en,
+        injectdbiterra => injectdbiterra,
+        injectsbiterra => injectsbiterra,
+        regcea => regcea,
+        rsta => reset,
+        sleep => sleep,
+        wea => sa_wr_en
+        );
+    end generate;
+    
 END ARCHITECTURE;
