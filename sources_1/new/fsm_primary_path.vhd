@@ -32,8 +32,8 @@ architecture rtl of primary_path is
 	signal doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
-	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');
-	signal addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
+	signal addra 			:	std_logic_vector(5 downto 0) := (others => '0');
+	signal addrb 			:	std_logic_vector(5 downto 0) := (others => '0');
 	signal dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal ena 				:	std_logic := '0';
@@ -47,7 +47,6 @@ architecture rtl of primary_path is
 	signal sleep 			:	std_logic := '0';
 	signal wea 				:	std_logic_vector(0 downto 0) := "0";
 	signal web 				:	std_logic_vector(0 downto 0) := "0";
-	
 begin
 
 LMS_UPDATE : entity work.LMS_Update_FSM
@@ -91,8 +90,8 @@ port map(
 GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
     WEIGHTS_STORAGE : xpm_memory_tdpram
     generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
-        ADDR_WIDTH_B => 8, -- DECIMAL
+        ADDR_WIDTH_A => 6, -- DECIMAL
+        ADDR_WIDTH_B => 6, -- DECIMAL
         AUTO_SLEEP_TIME => 0, -- DECIMAL
         BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
         BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
@@ -103,7 +102,7 @@ GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
         MEMORY_INIT_PARAM => "0", -- String
         MEMORY_OPTIMIZATION => "true", -- String
         MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
+        MEMORY_SIZE => 1536, -- DECIMAL (measured in bits)
         MESSAGE_CONTROL => 0, -- DECIMAL
         READ_DATA_WIDTH_A => 24, -- DECIMAL
         READ_DATA_WIDTH_B => 24, -- DECIMAL

@@ -31,8 +31,8 @@ architecture rtl of secondary_path is
 	signal doutb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal sbiterra 		:	std_logic := '0';
 	signal sbiterrb 		:	std_logic := '0';
-	signal addra 			:	std_logic_vector(7 downto 0) := (others => '0');
-	signal addrb 			:	std_logic_vector(7 downto 0) := (others => '0');
+	signal addra 			:	std_logic_vector(5 downto 0) := (others => '0');
+	signal addrb 			:	std_logic_vector(5 downto 0) := (others => '0');
 	signal dina 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal dinb 			:	vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
 	signal ena 				:	std_logic := '0';
@@ -53,7 +53,7 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
-	clk_ila    => clk_ila,
+	clk_ila     => clk_ila,
 	reset 		=> reset,
 	en			=> algo_enable,
 	input		=> algo_input,
@@ -61,9 +61,9 @@ port map(
 	adapt		=> algo_adapt,
 	--ram interface
 	wt_addr		=> addra,
-	wt_ram_en		=> ena,
-	wt_wr_en		=> wea(0),
-	wt_data_in		=> douta,
+	wt_ram_en   => ena,
+	wt_wr_en	=> wea(0),
+	wt_data_in	=> douta,
 	wt_data_out	=> dina
 );
 
@@ -72,16 +72,16 @@ generic map(L => L, W => W)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,
-	clk_ila    => clk_ila,
+	clk_ila     => clk_ila,
 	reset 		=> reset,
 	en			=> filt_enable,
 	input		=> filt_input,
 	output		=> filt_output,
 	--ram interface
 	wt_addr		=> addrb,
-	wt_ram_en		=> enb,
-	wt_wr_en		=> web(0),
-	wt_data_in		=> doutb
+	wt_ram_en	=> enb,
+	wt_wr_en	=> web(0),
+	wt_data_in	=> doutb
 );
 
 -- xpm_memory_tdpram: True Dual Port RAM
@@ -89,8 +89,8 @@ port map(
 GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
     WEIGHTS_STORAGE : xpm_memory_tdpram
     generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
-        ADDR_WIDTH_B => 8, -- DECIMAL
+        ADDR_WIDTH_A => 6, -- DECIMAL
+        ADDR_WIDTH_B => 6, -- DECIMAL
         AUTO_SLEEP_TIME => 0, -- DECIMAL
         BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
         BYTE_WRITE_WIDTH_B => 24, -- DECIMAL
@@ -101,7 +101,7 @@ GEN_WEIGHTS_STORAGE : for i in 0 to W-1 generate
         MEMORY_INIT_PARAM => "0", -- String
         MEMORY_OPTIMIZATION => "true", -- String
         MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL (measured in bits)
+        MEMORY_SIZE => 1536, -- DECIMAL (measured in bits)
         MESSAGE_CONTROL => 0, -- DECIMAL
         READ_DATA_WIDTH_A => 24, -- DECIMAL
         READ_DATA_WIDTH_B => 24, -- DECIMAL

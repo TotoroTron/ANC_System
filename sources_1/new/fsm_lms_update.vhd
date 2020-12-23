@@ -17,8 +17,9 @@ ENTITY LMS_Update_FSM IS
         input 		: IN  std_logic_vector(23 DOWNTO 0);  
         error 		: IN  std_logic_vector(23 DOWNTO 0);  
         Adapt       : IN  std_logic;
+        
         --RAM INTERFACE
-        wt_addr 	: out std_logic_vector(7 downto 0) := (others => '0');
+        wt_addr 	: out std_logic_vector(5 downto 0) := (others => '0');
         wt_ram_en	: out std_logic := '0'; --ram clk enable
         wt_wr_en 	: out std_logic := '0'; --ram write enable
         wt_data_in 	: in  vector_of_std_logic_vector24(0 to W-1);
@@ -33,14 +34,14 @@ ARCHITECTURE Behavioral OF LMS_Update_FSM IS
     SIGNAL NEXT_STATE           : STATE_TYPE;
     SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
     SIGNAL error_signed         : signed(23 DOWNTO 0) := (others => '0');
-    signal s_addr				: unsigned(7 downto 0) := (others => '0');
-    signal s_next_addr          : unsigned(7 downto 0) := (others => '0');
+    signal s_addr				: unsigned(5 downto 0) := (others => '0');
+    signal s_next_addr          : unsigned(5 downto 0) := (others => '0');
     signal idle                 : std_logic := '1';
     signal next_idle            : std_logic := '1';
     
     signal sample_reg           : vector_of_signed24(0 to W-1) := (others => (others => '0'));
     signal next_sample_reg      : vector_of_signed24(0 to W-1) := (others => (others => '0'));
-    signal sa_addr 		        :  std_logic_vector(7 downto 0) := (others => '0');
+    signal sa_addr 		        :  std_logic_vector(5 downto 0) := (others => '0');
     signal sa_ram_en		    :  std_logic := '0'; --ram clk enable
     signal sa_wr_en 		    :  std_logic_vector(0 downto 0) := "0"; --ram write enable
     signal sa_data_in           : vector_of_std_logic_vector24(0 to W-1) := (others => (others => '0'));
@@ -53,12 +54,27 @@ ARCHITECTURE Behavioral OF LMS_Update_FSM IS
 	signal injectsbiterra 	:	std_logic := '0';
 	signal regcea 			:	std_logic := '0';
 	signal sleep 			:	std_logic := '0';
+	
+	signal ila_addr         : std_logic_vector(23 downto 0);
 BEGIN
 	
     input_signed <= signed(input);
     error_signed <= signed(error);	
 	wt_addr <= std_logic_vector(s_addr);
 	sa_addr <= std_logic_vector(s_addr);
+	ila_addr <= X"0000" & "00" & sa_addr;
+	
+--	ILA_LMS_UPDATE : ila_3
+--	port map(
+--	   clk => clk_dsp,
+--	   probe0 => ila_addr,
+--	   probe1 => wt_data_in(0),
+--	   probe2 => wt_data_in(1),
+--	   probe3 => wt_data_in(2),
+--	   probe4 => sa_data_in(0),
+--	   probe5 => sa_data_in(1),
+--	   probe6 => sa_data_in(2)
+--	);
 	
 	DSP_STATE_REGISTER : PROCESS(clk_dsp, reset, en)
 	BEGIN
@@ -82,15 +98,17 @@ BEGIN
         variable weight_out 	: vector_of_signed25(0 to W-1) := (others => (others => '0'));
         variable sample_in      : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable sample_out     : vector_of_signed24(0 to W-1) := (others => (others => '0'));
-        variable leak           : signed(24 downto 0) := "0111111111111111111101110"; --fixpt25fr24 = 0.999998927116394
+        
+        variable leak           : signed(24 downto 0) := '0' & X"FFFFF0";
         variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
-        variable mu             : signed(23 downto 0) := "010000000000000000000000"; --0.25
+        
+        variable mu             : signed(23 downto 0) := X"010000";
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated 
         variable mult           : vector_of_signed48(0 to W-1) := (others => (others => '0')); --product of mu_error and weight_in
         variable mult_cast      : vector_of_signed24(0 to W-1) := (others => (others => '0')); --mult0 truncated 
-        variable mux1_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
-        variable mux2_out    : vector_of_signed24(0 to W-1) := (others => (others => '0'));
+        variable mux1_out       : vector_of_signed24(0 to W-1) := (others => (others => '0'));
+        variable mux2_out       : vector_of_signed24(0 to W-1) := (others => (others => '0'));
     BEGIN
         next_idle       <= idle;
         s_next_addr     <= s_addr;
@@ -167,9 +185,9 @@ BEGIN
                 mult_cast(i) := mult(i)(47 downto 24);
                 
                 if adapt = '1' then
---                    leak_w(i) := leak * resize(weight_in(i),25);
---                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mult_cast(i),25);                
-                    weight_out(i) := resize(weight_in(i),25) + resize(mult_cast(i),25);
+                    leak_w(i) := leak * resize(weight_in(i),25);
+                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mult_cast(i),25);                
+--                    weight_out(i) := resize(weight_in(i),25) + resize(mult_cast(i),25);
                 else
                     weight_out(i) := resize(weight_in(i),25);
                 end if;
@@ -196,7 +214,7 @@ BEGIN
     INPUT_BUFFER_STORAGE : for i in 0 to W-1 generate
     xpm_memory_spram_inst : xpm_memory_spram
         generic map (
-        ADDR_WIDTH_A => 8, -- DECIMAL
+        ADDR_WIDTH_A => 6, -- DECIMAL
         AUTO_SLEEP_TIME => 0, -- DECIMAL
         BYTE_WRITE_WIDTH_A => 24, -- DECIMAL
         CASCADE_HEIGHT => 0, -- DECIMAL
@@ -205,7 +223,7 @@ BEGIN
         MEMORY_INIT_PARAM => "0", -- String
         MEMORY_OPTIMIZATION => "true", -- String
         MEMORY_PRIMITIVE => "auto", -- String
-        MEMORY_SIZE => 6144, -- DECIMAL
+        MEMORY_SIZE => 1536, -- DECIMAL
         MESSAGE_CONTROL => 0, -- DECIMAL
         READ_DATA_WIDTH_A => 24, -- DECIMAL
         READ_LATENCY_A => 1, -- DECIMAL

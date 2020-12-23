@@ -32,7 +32,16 @@ PACKAGE anc_package IS
             PROBE3      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE4      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
             PROBE5      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
-            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0)       
+            PROBE6      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE7      : IN STD_LOGIC_VECTOR(23 DOWNTO 0);
+            PROBE8      : IN STD_LOGIC;
+            PROBE9      : IN STD_LOGIC;
+            PROBE10     : IN STD_LOGIC;
+            PROBE11     : IN STD_LOGIC;
+            PROBE12     : IN STD_LOGIC;
+            PROBE13     : IN STD_LOGIC;
+            PROBE14     : IN STD_LOGIC;
+            PROBE15     : IN STD_LOGIC
         );
     END COMPONENT;
     component clk_wiz_0

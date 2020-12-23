@@ -74,6 +74,8 @@ architecture rtl of ANC_System is
     --acoustic feedback algorithm
     signal AFA_en : std_logic := '0';
     signal AFA_adapt : std_logic := '0';
+    
+    signal gnd : std_logic_vector(23 downto 0) := (others => '0');
 begin
 
     SIGNAL_ROUTING_BUFFERS : process(clk_anc)
@@ -110,12 +112,12 @@ begin
         if rising_edge(clk_anc) then
             if stim_count < 1000000 then
                 stim_count <= stim_count + 1; --625, 100000
-                if stim_count > 625 AND stim_count < 100000 then
+                if stim_count > 625 AND stim_count < 200000 then
                     adapt <= '1';
                 else
                     adapt <= '0';
                 end if;
-                if stim_count < 100000 then
+                if stim_count < 200000 then
                     trainingMode <= '1';
                 else
                     trainingMode <= '0';
@@ -128,7 +130,7 @@ begin
     PPF_negative <= std_logic_vector( - signed(PPF_output) );
     
 	PRIMARY_SOUND_PATH : entity work.primary_path
-	generic map(L => 384, W => 16)
+	generic map(L => 480, W => 12)
 	port map(
 		clk_anc => clk_anc,
 		clk_dsp => clk_dsp,
@@ -179,7 +181,7 @@ begin
 	   AFA_adapt <= trainingMode;
 	
     TRAINING_NOISE : entity work.PRBS
-    port map(clk => clk_22Khz, rst => reset, ce => rand_en, rand => rand_out);
+    port map(clk => clk_anc, rst => reset, ce => rand_en, rand => rand_out);
     rand_en <= '1';
     trainingNoise <= std_logic_vector(shift_right(signed(rand_out), 6)); --divide 64x
 
@@ -206,7 +208,16 @@ begin
 --        probe3  => antiNoise,
 --        probe4  => trainingNoise, --secondary path filter out
 --        probe5  => AFF_output, --acoustic feedback filter out
---        probe6  => PPF_output --primary path filter out
+--        probe6  => PPF_output, --primary path filter out
+--        probe7  => gnd,
+--        probe8  => SPA_en,
+--        probe9  => AFA_en,
+--        probe10 => PPA_en,
+--        probe11 => SPF_en,
+--        probe12 => AFF_en,
+--        probe13 => PPF_en,
+--        probe14 => trainingMode,
+--        probe15 => adapt
 --    );
     
 end rtl;

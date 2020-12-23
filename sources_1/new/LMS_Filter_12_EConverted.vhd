@@ -48,9 +48,6 @@ ENTITY LMS_Filter_12_EConverted IS
         input        :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         error      :   IN    std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         adapt        :   IN    std_logic;
---        ce_out                            :   OUT   std_logic;
---        output                            :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
---        error_rsvd                        :   OUT   std_logic_vector(23 DOWNTO 0);  -- sfix24_En24
         weights                           :   OUT   vector_of_std_logic_vector24(0 TO 11)  -- sfix24_En24 [12]
         );
 END LMS_Filter_12_EConverted;
@@ -219,7 +216,7 @@ BEGIN
 -- ***** LMS Weight Update Function *****
 
   mul_temp_12 <= C_LMS_FILTER_24_STEP_SIZE * error_signed;
-  mu_err <= mul_temp_12(46 DOWNTO 23);
+  mu_err <= mul_temp_12(47 DOWNTO 24);
 
   mul_temp_13 <= data_pipeline(0) * mu_err;
   mu_err_data_prod(0) <= mul_temp_13(47 DOWNTO 24);
