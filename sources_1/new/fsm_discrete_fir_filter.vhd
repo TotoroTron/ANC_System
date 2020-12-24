@@ -8,7 +8,7 @@ USE work.anc_package.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 ENTITY Discrete_FIR_Filter_FSM IS
-	GENERIC( L : integer := 12; W : integer := 3); --length, width
+	GENERIC( L : integer := 128; W : integer := 8); -- L = length (filter order), W = width (parallel MACs)
 	PORT(
 		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
 		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
@@ -27,14 +27,14 @@ END Discrete_FIR_Filter_FSM;
 
 ARCHITECTURE Behavioral OF Discrete_FIR_Filter_FSM IS
 	CONSTANT R : integer := L/W; --length/width ratio
-	TYPE STATE_TYPE IS (S0, S1, S2, S3, S4);
+	TYPE STATE_TYPE IS (S0, S1, S2, S3, S4, R0, R1);
 	SIGNAL STATE               : STATE_TYPE := S0;
 	SIGNAL NEXT_STATE 	       : STATE_TYPE;
 	SIGNAL input_signed 	   : signed(23 downto 0) := (others => '0');
 	SIGNAL s_addr			   : unsigned(5 downto 0) := (others => '0');
 	signal s_next_addr         : unsigned(5 downto 0) := (others => '0');
-	SIGNAL idle                : std_logic := '0';
-	signal next_idle           : std_logic := '0';
+	SIGNAL idle                : std_logic := '1';
+	signal next_idle           : std_logic := '1';
 	signal s_sum               : signed(52 downto 0) := (others => '0');
 	signal s_next_sum          : signed(52 downto 0) := (others => '0');
 	
@@ -78,7 +78,7 @@ BEGIN
 	BEGIN
 	IF rising_edge(clk_dsp) THEN
 		IF reset = '1' THEN
-			STATE <= S0;
+			STATE <= R0;
 			idle <= '1';
 			s_addr <= (others => '0');
 			sample_reg <= (others => (others => '0'));
@@ -185,7 +185,23 @@ BEGIN
                 output <= std_logic_vector(s_sum(47 downto 24));
                 NEXT_STATE <= S0;
             END IF;
+        WHEN R0 => --flush RAM with zeros
+            wt_ram_en <= '0'; wt_wr_en <= '0';
+            sa_ram_en <= '1'; sa_wr_en <= "1"; 
+            sa_data_out <= (others => (others => '0'));
+            output <= (others => '0');
+            NEXT_STATE <= R1;
+        WHEN R1 =>
+            wt_ram_en <= '0'; wt_wr_en <= '0';
+            sa_ram_en <= '0'; sa_wr_en <= "0"; 
+            IF s_addr < R-1 THEN
+                s_next_addr <= s_addr + 1;
+                NEXT_STATE <= R0;
+            ELSIF s_addr = R-1 THEN
+                NEXT_STATE <= S0;
+            END IF;
         END CASE;
+        
     END PROCESS;
     
     -- xpm_memory_spram: Single Port RAM

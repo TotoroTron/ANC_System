@@ -126,7 +126,7 @@ begin
     generic map(count => 834) port map(clk_in => clk, clk_out => clk_sine);
     
     PRIMARY_SOUND_PATH : entity work.primary_path
-    generic map(L => L, W => W)
+    generic map(L => L, W => W, leak_en => '1')
 	port map(
 		clk_anc 	=> clk_anc,
 		clk_dsp 	=> clk_dsp,

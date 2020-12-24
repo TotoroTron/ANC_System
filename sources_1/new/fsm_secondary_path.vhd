@@ -7,7 +7,7 @@ Library xpm;
 use xpm.vcomponents.all;
 
 entity secondary_path is
-    GENERIC( L : integer; W : integer); --length width
+    GENERIC( L : integer; W : integer; leak_en : std_logic); --length width
 	port(
 		clk_anc 	: in std_logic;
 		clk_dsp 	: in std_logic;
@@ -49,7 +49,7 @@ architecture rtl of secondary_path is
 begin
 
 LMS_FILTER : entity work.LMS_Filter_FSM
-generic map(L => L, W => W)
+generic map(L => L, W => W, leak_en => leak_en)
 port map(
 	clk_anc 	=> clk_anc,
 	clk_dsp 	=> clk_dsp,

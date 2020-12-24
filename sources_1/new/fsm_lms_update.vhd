@@ -7,7 +7,7 @@ USE IEEE.numeric_std.ALL;
 USE work.anc_package.ALL;
 
 ENTITY LMS_Update_FSM IS
-    GENERIC( L : integer := 12; W : integer := 3); --length, width
+    GENERIC( L : integer := 128; W : integer := 8; leak_en : std_logic := '1'); -- L = length (filter order), W = width (parallel MACs)
     PORT( 
         clk_anc 	: IN  std_logic; --10Khz ANC System Clock
         clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
@@ -17,7 +17,6 @@ ENTITY LMS_Update_FSM IS
         input 		: IN  std_logic_vector(23 DOWNTO 0);  
         error 		: IN  std_logic_vector(23 DOWNTO 0);  
         Adapt       : IN  std_logic;
-        
         --RAM INTERFACE
         wt_addr 	: out std_logic_vector(5 downto 0) := (others => '0');
         wt_ram_en	: out std_logic := '0'; --ram clk enable
@@ -29,7 +28,7 @@ END LMS_Update_FSM;
 
 ARCHITECTURE Behavioral OF LMS_Update_FSM IS
 	CONSTANT R : integer := L/W; --length/width ratio
-    TYPE STATE_TYPE IS (S0, S1, S2, S3, S4);
+    TYPE STATE_TYPE IS (S0, S1, S2, S3, S4, R0, R1);
     SIGNAL STATE            	: STATE_TYPE := S0;
     SIGNAL NEXT_STATE           : STATE_TYPE;
     SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
@@ -80,7 +79,7 @@ BEGIN
 	BEGIN
 	IF rising_edge(clk_dsp) THEN
 		IF reset = '1' THEN
-			STATE <= S0;
+			STATE <= R0;
 			idle <= '1';
 			s_addr <= (others => '0');
 			sample_reg <= (others => (others => '0'));
@@ -185,9 +184,12 @@ BEGIN
                 mult_cast(i) := mult(i)(47 downto 24);
                 
                 if adapt = '1' then
+                    if leak_en = '1' then
                     leak_w(i) := leak * resize(weight_in(i),25);
-                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mult_cast(i),25);                
---                    weight_out(i) := resize(weight_in(i),25) + resize(mult_cast(i),25);
+                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mult_cast(i),25);
+                    else                
+                    weight_out(i) := resize(weight_in(i),25) + resize(mult_cast(i),25);
+                    end if;
                 else
                     weight_out(i) := resize(weight_in(i),25);
                 end if;
@@ -204,6 +206,21 @@ BEGIN
                 NEXT_STATE <= S1;
             ELSIF s_addr = R-1 THEN
                 s_next_addr <= (others => '0');
+                NEXT_STATE <= S0;
+            END IF;
+        WHEN R0 => --flush RAM with zeros
+            wt_ram_en <= '1'; wt_wr_en <= '1';
+            sa_ram_en <= '1'; sa_wr_en <= "1"; 
+            sa_data_out <= (others => (others => '0'));
+            wt_data_out <= (others => (others => '0'));
+            NEXT_STATE <= R1;
+        WHEN R1 =>
+            wt_ram_en <= '0'; wt_wr_en <= '0';
+            sa_ram_en <= '0'; sa_wr_en <= "0"; 
+            IF s_addr < R-1 THEN
+                s_next_addr <= s_addr + 1;
+                NEXT_STATE <= R0;
+            ELSIF s_addr = R-1 THEN
                 NEXT_STATE <= S0;
             END IF;
         END CASE;

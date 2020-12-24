@@ -7,7 +7,7 @@ USE IEEE.numeric_std.ALL;
 USE work.anc_package.ALL;
 
 ENTITY LMS_Filter_FSM IS
-  GENERIC( L : integer := 128; W : integer := 8); --length, width
+  GENERIC( L : integer := 128; W : integer := 8; leak_en : std_logic := '0'); -- L = length (filter order), W = width (parallel MACs)
   PORT( 
 		clk_anc 	: IN  std_logic; --10Khz ANC System Clock
 		clk_dsp		: IN  std_logic; --125Mhz FPGA Clock Pin
@@ -28,15 +28,15 @@ END LMS_Filter_FSM;
 
 ARCHITECTURE Behavioral OF LMS_Filter_FSM IS
     CONSTANT R : integer := L/W; --length/width ratio
-	TYPE STATE_TYPE IS (S0, S1, S2, S3, S4, S5, S6, S7, S8);
+	TYPE STATE_TYPE IS (S0, S1, S2, S3, S4, S5, S6, S7, S8, R0, R1);
 	SIGNAL STATE                : STATE_TYPE := S0;
 	SIGNAL NEXT_STATE 	        : STATE_TYPE;
 	SIGNAL input_signed         : signed(23 DOWNTO 0) := (others => '0');
 	SIGNAL desired_signed       : signed(23 DOWNTO 0) := (others => '0');
 	SIGNAL s_addr				: unsigned(5 downto 0) := (others => '0');
 	SIGNAL s_next_addr	        : unsigned(5 downto 0) := (others => '0');
-	signal idle                 : std_logic := '0';
-	signal next_idle            : std_logic := '0';
+	signal idle                 : std_logic := '1';
+	signal next_idle            : std_logic := '1';
     signal s_sum                : signed(52 downto 0) := (others => '0');
 	signal s_next_sum           : signed(52 downto 0) := (others => '0');
 	
@@ -92,7 +92,7 @@ BEGIN
 	BEGIN
 	IF rising_edge(clk_dsp) THEN
 		IF reset = '1' THEN
-			STATE <= S0;
+			STATE <= R0;
 			idle <= '1';
 			s_addr <= (others => '0');			
 			sample_reg <= (others => (others => '0'));
@@ -112,10 +112,10 @@ BEGIN
         variable sample_in      : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         variable sample_out     : vector_of_signed24(0 to W-1) := (others => (others => '0'));
         
-        variable leak           : signed(24 downto 0) := '0' & X"FFFFF0";
+        variable leak           : signed(24 downto 0) := '0' & X"FFFFB0";
         variable leak_w         : vector_of_signed50(0 to W-1) := (others => (others => '0'));
         
-        variable mu             : signed(23 downto 0) := X"010000";
+        variable mu             : signed(23 downto 0) := X"040000";
         variable mu_err     	: signed(47 downto 0) := (others => '0'); --product of mu and error
         variable mu_err_cast    : signed(23 downto 0) := (others => '0'); --mu_err truncated
         variable mu_err_in     	: vector_of_signed48(0 to W-1) := (others => (others => '0')); --mu * error * input
@@ -258,9 +258,12 @@ BEGIN
                 mu_err_in_cast(i) := mu_err_in(i)(47 downto 24);
                 
                 if adapt = '1' then
+                    if leak_en = '1' then
                     leak_w(i) := leak * resize(weight_in(i),25);
-                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mu_err_in_cast(i),25);                
---                    weight_out(i) := resize(weight_in(i),25) + resize(mu_err_in_cast(i),25);
+                    weight_out(i) := resize(leak_w(i)(47 downto 24),25) + resize(mu_err_in_cast(i),25);
+                    else                
+                    weight_out(i) := resize(weight_in(i),25) + resize(mu_err_in_cast(i),25);
+                    end if;
                 else
                     weight_out(i) := resize(weight_in(i),25);
                 end if;
@@ -278,7 +281,22 @@ BEGIN
             ELSIF s_addr = R-1 THEN
                 s_next_addr <= (others => '0');
                 NEXT_STATE <= S0;
-            END IF;            
+            END IF;
+        WHEN R0 => --flush RAM with zeros
+            wt_ram_en <= '1'; wt_wr_en <= '1';
+            sa_ram_en <= '1'; sa_wr_en <= "1"; 
+            sa_data_out <= (others => (others => '0'));
+            wt_data_out <= (others => (others => '0'));
+            NEXT_STATE <= R1;
+        WHEN R1 =>
+            wt_ram_en <= '0'; wt_wr_en <= '0';
+            sa_ram_en <= '0'; sa_wr_en <= "0"; 
+            IF s_addr < R-1 THEN
+                s_next_addr <= s_addr + 1;
+                NEXT_STATE <= R0;
+            ELSIF s_addr = R-1 THEN
+                NEXT_STATE <= S0;
+            END IF;          
         END CASE;
     END PROCESS;
 

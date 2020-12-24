@@ -7,7 +7,7 @@ entity top_level is
 	port(
         clk : in std_logic; --125 Mhz
         reset : in std_logic; --reset
-        enable : in std_logic; --ANC adapt enable
+        adapt : in std_logic; --ANC adapt enable
 		
 		--JA line out
 		ja_tx_mclk : out std_logic;
@@ -40,18 +40,18 @@ architecture rtl of top_level is
     signal refMic, errMic, refMicAmp, errMicAmp : std_logic_vector(31 downto 0);
     signal tx_valid, tx_ready, tx_last, ja_tx_ready : std_logic;
     signal rx_valid, rx_ready, rx_last, ja_rx_valid, ja_rx_last: std_logic;
-    signal clk_5Mhz : std_logic := '0';
-    signal clk_20Mhz : std_logic := '0';
+    signal clk_5Mhz : std_logic;
+    signal clk_20Mhz : std_logic;
     signal clk_ila : std_logic := '0'; --clock integrated logic analyzer
     signal clk_anc : std_logic := '0'; --clock active noise control
     signal clk_dsp : std_logic := '0'; --clock digital signal processing
     signal resetn : std_logic := '0';
-    signal count : unsigned(8 downto 0) := (others => '0'); --clock divider counter
+    signal count : unsigned(9 downto 0) := (others => '0'); --clock divider counter
     component axis_i2s2 is
     port(
         axis_clk : in std_logic;
         axis_resetn : in std_logic;
-        count : in unsigned(8 downto 0);
+        --count : in unsigned(8 downto 0);
         tx_axis_s_data : in std_logic_vector(31 downto 0);
         tx_axis_s_valid : in std_logic;
         tx_axis_s_ready : out std_logic;
@@ -79,8 +79,8 @@ begin
 
 --    noiseAmp <= std_logic_vector( shift_left( signed(noise), 2));
 --    antiNoiseAmp <= std_logic_vector( shift_left( signed(antiNoise), 2));
-    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 2)); --amplify 4x
-    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 2)); --amplify 4x
+    errMicAmp <= std_logic_vector( shift_left( signed(errMic), 1)); --amplify 4x
+    refMicAmp <= std_logic_vector( shift_left( signed(refMic), 1)); --amplify 4x
 --    errMicAmp <= errMic;
 --    refMicAmp <= refMic;
     noiseAmp <= noise;
@@ -90,7 +90,7 @@ begin
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
-        count => count,
+        --count => count,
         
         tx_axis_s_data => antiNoiseAmp, --input
         tx_axis_s_valid => tx_valid,    --input
@@ -117,7 +117,7 @@ begin
     port map(
         axis_clk => clk_5Mhz,           --input
         axis_resetn => resetn,          --input
-        count => count,
+        --count => count,
         
         tx_axis_s_data => noiseAmp,     --input
         tx_axis_s_valid => tx_valid,    --input
@@ -157,7 +157,7 @@ begin
         clk_dsp => clk_dsp,
         clk_anc => clk_anc, --10Khz
         reset => reset, --reset
-        enable => enable, --ANC adapt enable
+        adapt => adapt, --ANC adapt enable
         refMic_in => refMicAmp(23 downto 0),
         errMic_in => errMicAmp(23 downto 0),
         antiNoise_out => antiNoise(23 downto 0),
@@ -165,13 +165,13 @@ begin
     );
     
     PMOD_CLK : clk_wiz_0
-    port map(clk_in1 => clk, clk_out1 => clk_5Mhz); --20.48Mhz, 50% duty
-    COUNTER : process(clk_5Mhz) begin --clock divider counter
-    if rising_edge(clk_5Mhz) then
+    port map(clk_in1 => clk, clk_out1 => clk_20Mhz); --20.48Mhz, 50% duty
+    COUNTER : process(clk_20Mhz) begin --clock divider counter
+    if rising_edge(clk_20Mhz) then
     count <= count + 1; end if;
     end process;
-    clk_dsp <= clk_5Mhz;
-    --clk_5Mhz <= count(2); --5.12Mhz
-    clk_anc <= count(8); --10Khz
+    clk_dsp <= clk_20Mhz;
+    clk_5Mhz <= count(1); --5.12Mhz
+    clk_anc <= count(9); --10Khz
     
 end architecture rtl;
