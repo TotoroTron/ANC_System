@@ -1,6 +1,6 @@
 # ANC_System
 
-NJIT Senior Design Project - Fall 2020
+NJIT Senior Design Project - Fall 2020 1st Place Finish
 Team 9 - FPGA-based ANC System
 
 We investigate active noise control solutions that are capable of attenuating a broad band of frequencies. The core objective of our project is to design and demonstrate an FPGA-based ANC system to attenuate undesired low frequency noise in HVAC air-ducts. Although ANC systems have been made before, we sought to develop a cost-effective FPGA-based version by creating hardware-efficient digital filters in VHDL.
