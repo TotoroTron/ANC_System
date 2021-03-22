@@ -10,3 +10,10 @@ Our ANC System is modelled using a typical Feedforward Filtered-X LMS configurat
 A complete project report is included in the repository for further details.
 
 Against a 150Hz + 225Hz noise source propagating through PVC pipe (3 inch diameter, 48 inch length) our ANC system is capable of learning and attenuating the noise at the opening of the PVC pipe from 85dBA to 67dBA after 40 seconds of adapting. Additional testing is due to find the band of frequencies for which our system is effective.
+
+Photos of hardware:
+![Screenshot](1_Overview.jpg)
+![Screenshot](2_FPGA_ADC_DAC.jpg)
+![Screenshot](3_Noise_Speaker_Microphone.jpg)
+![Screenshot](4_AntiNoise_Speaker_Microphone.jpg)
+![Screenshot](5_PhantomPowerSupply_48v.jpg)
